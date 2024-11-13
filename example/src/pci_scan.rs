@@ -2,14 +2,14 @@
 #![allow(dead_code)]
 
 extern crate alloc;
-extern crate pci;
 extern crate log;
+extern crate pci;
 
-pub use log::*;
 use alloc::{format, vec::Vec};
-use pci::{PCIDevice, Location, scan_bus, BAR};
-use pci::{PortOps, CSpaceAccessMethod};
 use core::ptr::{read_volatile, write_volatile};
+pub use log::*;
+use pci::{scan_bus, Location, PCIDevice, BAR};
+use pci::{CSpaceAccessMethod, PortOps};
 
 pub fn pci_scan() -> Option<u32> {
     let mut dev_list = Vec::new();
@@ -60,21 +60,20 @@ unsafe fn enable(loc: Location, paddr: u64) -> Option<usize> {
     let am = PCI_ACCESS;
 
     am.write32(ops, loc, BAR0, (paddr & !0xfff) as u32); //Only for 32-bit decoding
-    // if paddr != 0 {
-    //     // reveal PCI regs by setting paddr
-    // }
+                                                         // if paddr != 0 {
+                                                         //     // reveal PCI regs by setting paddr
+                                                         // }
 
     // 23 and lower are used
     static mut MSI_IRQ: u32 = 23;
 
     let _orig = am.read16(ops, loc, PCI_COMMAND);
 
-
     // if !msi_found {
-        // am.write16(ops, loc, PCI_COMMAND, (0x2) as u16);
-        am.write16(ops, loc, PCI_COMMAND, 0x6);
-        am.write32(ops, loc, PCI_INTERRUPT_LINE, 33);
-        // debug!("MSI not found, using PCI interrupt");
+    // am.write16(ops, loc, PCI_COMMAND, (0x2) as u16);
+    am.write16(ops, loc, PCI_COMMAND, 0x6);
+    am.write32(ops, loc, PCI_INTERRUPT_LINE, 33);
+    // debug!("MSI not found, using PCI interrupt");
     // }
 
     // debug!("pci device enable done");
@@ -86,7 +85,7 @@ pub const BAR0: u16 = 0x10;
 pub const PCI_CAP_PTR: u16 = 0x34;
 pub const PCI_INTERRUPT_LINE: u16 = 0x3c;
 pub const PCI_INTERRUPT_PIN: u16 = 0x3d;
-pub const PCI_COMMAND_INTX_DISABLE:u16 = 0x400;
+pub const PCI_COMMAND_INTX_DISABLE: u16 = 0x400;
 
 pub const PCI_MSI_CTRL_CAP: u16 = 0x00;
 pub const PCI_MSI_ADDR: u16 = 0x04;
