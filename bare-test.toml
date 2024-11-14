@@ -1,0 +1,5 @@
+[qemu]
+machine = "virt"
+cpu = "cortex-a53"
+graphic = false
+args = "-drive file=target/nvme.img,if=none,id=nvm -device nvme,serial=deadbeef,drive=nvm"
