@@ -303,11 +303,7 @@ impl<D: DmaAllocator, I: IrqController> NvmeInterface<D, I> {
     pub fn nvme_cqe_pending(&self, nvmeq: &mut MutexGuard<NvmeQueue<D>>) -> bool {
         let cq_head = nvmeq.cq_head;
         let cqe = nvmeq.cq[cq_head].read();
-        if (cqe.status & 1) == (nvmeq.cq_phase as u16) {
-            return true;
-        } else {
-            return false;
-        }
+        (cqe.status & 1) == (nvmeq.cq_phase as u16)
     }
 
     // notify nvme device we've completed the command
