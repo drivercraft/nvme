@@ -55,7 +55,7 @@ pub fn rust_main() -> ! {
     clear_bss();
     init_heap();
     println!("Hello, world!");
-    // pci_scan();
+    pci_scan();
     trap::init();
     nvme::nvme_test();
     
