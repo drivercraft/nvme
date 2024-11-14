@@ -1,0 +1,1 @@
+dd if=/dev/zero bs=1M count=128 of=target/nvme.img
