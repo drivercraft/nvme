@@ -56,8 +56,6 @@ fn test_uart() {
 
     let root = pcie::RootGeneric::new(base_vaddr.as_ptr() as usize);
 
-    let bar64_range = pcie_ranges[2];
-
     root.enumerate().for_each(|device| {
         debug!("PCI {}", device);
 
@@ -94,6 +92,7 @@ fn test_uart() {
                         prefetchable,
                     } => {
                         bar_addr = if address == 0 {
+                            let bar64_range = pcie_ranges[2];
                             let new_addr = bar64_range.parent_bus_address as usize;
                             unsafe { ep.write_bar(slot, new_addr) };
                             new_addr
