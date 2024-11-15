@@ -49,7 +49,6 @@ impl<O: OS> Nvme<O> {
         self.reg()
             .set_admin_completion_queue_base_address(self.admin_queue.cq.bus_addr());
 
-
         self.reg().enable_ctrl();
 
         debug!("Enabled ctrl");

@@ -12,6 +12,8 @@ fn main() {
     test_main();
 }
 
+use core::alloc::Layout;
+
 use bare_test::mem::dma;
 use bare_test::platform::page_size;
 use bare_test::time::delay;
@@ -43,30 +45,29 @@ fn test_uart() {
 
     info!("Init PCIE @{:?}", base_vaddr);
 
-    let mut root = pcie::RootGeneric::new(base_vaddr.as_ptr() as usize);
+    let root = pcie::RootGeneric::new(base_vaddr.as_ptr() as usize);
 
     root.enumerate().for_each(|device| {
-        let address = device.address();
         debug!("PCI {}", device);
 
         if let PciDevice::Endpoint(mut ep) = device {
             println!("{:?}", ep.id());
+            ep.update_command(|cmd| {
+                cmd | CommandRegister::IO_ENABLE
+                    | CommandRegister::MEMORY_ENABLE
+                    | CommandRegister::BUS_MASTER_ENABLE
+            });
+
             let bar = ep.bar(0);
             println!("bar0: {:?}", bar);
 
             if ep.device_type() == DeviceType::NvmeController {
-                ep.update_command(|cmd| {
-                    cmd | CommandRegister::IO_ENABLE
-                        | CommandRegister::MEMORY_ENABLE
-                        | CommandRegister::BUS_MASTER_ENABLE
-                });
-
                 let bar_addr = match bar.unwrap() {
                     Bar::Memory32 {
                         address,
                         size,
                         prefetchable,
-                    } => iomap((address as usize).into(), size as _),
+                    } => todo!(),
                     Bar::Memory64 {
                         address,
                         size,
