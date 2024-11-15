@@ -13,6 +13,7 @@ fn main() {
 }
 
 use core::alloc::Layout;
+use core::sync::atomic::fence;
 
 use bare_test::mem::dma;
 use bare_test::platform::page_size;
@@ -41,11 +42,21 @@ fn test_uart() {
         pcie_regs.push(iomap((reg.address as usize).into(), reg.size.unwrap()));
     }
 
+    let mut pcie_ranges = alloc::vec![];
+
+    for range in pcie.ranges() {
+        println!("pcie range: {:?}", range);
+
+        pcie_ranges.push(range);
+    }
+
     let base_vaddr = pcie_regs[0];
 
     info!("Init PCIE @{:?}", base_vaddr);
 
     let root = pcie::RootGeneric::new(base_vaddr.as_ptr() as usize);
+
+    let bar64_range = pcie_ranges[2];
 
     root.enumerate().for_each(|device| {
         debug!("PCI {}", device);
@@ -58,25 +69,47 @@ fn test_uart() {
                     | CommandRegister::BUS_MASTER_ENABLE
             });
 
-            let bar = ep.bar(0);
-            println!("bar0: {:?}", bar);
-
             if ep.device_type() == DeviceType::NvmeController {
-                let bar_addr = match bar.unwrap() {
+                let mut addr = None;
+                let slot = 0;
+                let bar = ep.bar(slot).unwrap();
+
+                println!("bar{}: {:?}", slot, bar);
+
+                let bar_addr;
+                let bar_size;
+
+                match bar {
                     Bar::Memory32 {
                         address,
                         size,
                         prefetchable,
-                    } => todo!(),
+                    } => {
+                        bar_addr = address as usize;
+                        bar_size = size as usize;
+                    }
                     Bar::Memory64 {
                         address,
                         size,
                         prefetchable,
-                    } => iomap((address as usize).into(), size as _),
+                    } => {
+                        bar_addr = if address == 0 {
+                            let new_addr = bar64_range.parent_bus_address as usize;
+                            unsafe { ep.write_bar(slot, new_addr) };
+                            new_addr
+                        } else {
+                            address as usize
+                        };
+                        bar_size = size as usize;
+                    }
                     Bar::Io { port } => todo!(),
                 };
 
-                let nvme = Nvme::<OSImpl>::new(bar_addr).unwrap();
+                if slot == 0 {
+                    addr = Some(iomap(bar_addr.into(), bar_size));
+                }
+
+                let nvme = Nvme::<OSImpl>::new(addr.unwrap()).unwrap();
             }
         }
     });
