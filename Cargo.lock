@@ -353,6 +353,7 @@ dependencies = [
  "log",
  "pcie",
  "sparreal-macros",
+ "tock-registers 0.9.0",
  "volatile 0.3.0",
 ]
 

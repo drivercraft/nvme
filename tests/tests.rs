@@ -12,6 +12,9 @@ fn main() {
     test_main();
 }
 
+use bare_test::mem::dma;
+use bare_test::platform::page_size;
+use bare_test::time::delay;
 use bare_test::{driver::device_tree::get_device_tree, mem::mmu::iomap, println};
 use log::*;
 use nvme_driver::*;
@@ -47,12 +50,32 @@ fn test_uart() {
         debug!("PCI {}", device);
 
         if let PciDevice::Endpoint(mut ep) = device {
+            println!("{:?}", ep.id());
+            let bar = ep.bar(0);
+            println!("bar0: {:?}", bar);
+
             if ep.device_type() == DeviceType::NvmeController {
                 ep.update_command(|cmd| {
                     cmd | CommandRegister::IO_ENABLE
                         | CommandRegister::MEMORY_ENABLE
                         | CommandRegister::BUS_MASTER_ENABLE
                 });
+
+                let bar_addr = match bar.unwrap() {
+                    Bar::Memory32 {
+                        address,
+                        size,
+                        prefetchable,
+                    } => iomap((address as usize).into(), size as _),
+                    Bar::Memory64 {
+                        address,
+                        size,
+                        prefetchable,
+                    } => iomap((address as usize).into(), size as _),
+                    Bar::Io { port } => todo!(),
+                };
+
+                let nvme = Nvme::<OSImpl>::new(bar_addr).unwrap();
             }
         }
     });
@@ -60,30 +83,36 @@ fn test_uart() {
     println!("test passed!");
 }
 
-pub struct IrqProvider;
+pub struct OSImpl;
 
-impl IrqController for IrqProvider {
-    fn enable_irq(irq: usize) {}
-
-    fn disable_irq(irq: usize) {}
-}
-
-pub struct DmaProvider;
-
-impl DmaAllocator for DmaProvider {
-    fn dma_alloc(size: usize) -> usize {
-        0
+impl OS for OSImpl {
+    fn sleep(duration: core::time::Duration) {
+        todo!()
     }
 
-    fn dma_dealloc(addr: usize, size: usize) -> usize {
-        0
+    fn dma_alloc(layout: core::alloc::Layout) -> Option<DMAMem> {
+        unsafe {
+            dma::alloc_coherent(layout).map(|m| DMAMem {
+                virt: m.cpu_addr,
+                phys: m.bus_addr.as_u64(),
+                layout,
+            })
+        }
     }
 
-    fn phys_to_virt(phys: usize) -> usize {
-        0
+    fn dma_dealloc(dma: DMAMem) {
+        unsafe {
+            dma::dealloc_coherent(
+                dma::DMAMem {
+                    cpu_addr: dma.virt,
+                    bus_addr: dma.phys.into(),
+                },
+                dma.layout,
+            );
+        }
     }
 
-    fn virt_to_phys(virt: usize) -> usize {
-        0
+    fn page_size() -> usize {
+        unsafe { page_size() }
     }
 }
