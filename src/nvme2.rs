@@ -3,8 +3,9 @@ use core::ptr::NonNull;
 use log::{debug, info};
 
 use crate::{
+    command::Feature,
     err::*,
-    queue::{AdminAndNvmCommandSetPRP, NvmeQueue},
+    queue::{CommandSet, NvmeQueue},
     registers::NvmeReg,
     OS,
 };
@@ -35,6 +36,10 @@ impl<O: OS> Nvme<O> {
 
         s.nvme_configure_admin_queue();
 
+        s.config_io_queue()?;
+
+        debug!("IO queue ok.");
+
         Ok(s)
     }
 
@@ -59,9 +64,39 @@ impl<O: OS> Nvme<O> {
         debug!("Enabled ctrl");
     }
 
+    fn config_io_queue(&mut self) -> Result {
+        // 设置 io queue 数量
+        let cmd = CommandSet::set_features(Feature::NumberOfQueues {
+            nsq: self.io_queues.sq.len() as u32 - 1,
+            ncq: self.io_queues.cq.len() as u32 - 1,
+        });
+        self.admin_queue.command_sync(cmd)?;
 
+        let data = CommandSet::create_io_completion_queue(
+            self.io_queues.qid,
+            self.io_queues.cq.len() as _,
+            self.io_queues.cq.bus_addr(),
+            true,
+            false,
+            0,
+        );
 
+        self.admin_queue.command_sync(data)?;
 
+        let data = CommandSet::create_io_submission_queue(
+            self.io_queues.qid,
+            self.io_queues.sq.len() as _,
+            self.io_queues.sq.bus_addr(),
+            true,
+            0,
+            self.io_queues.qid,
+            0,
+        );
+
+        self.admin_queue.command_sync(data)?;
+
+        Ok(())
+    }
 
     pub fn version(&self) -> (usize, usize, usize) {
         self.reg().version()
