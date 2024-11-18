@@ -38,12 +38,14 @@ impl Opcode {
 
 pub enum Feature {
     NumberOfQueues { nsq: u32, ncq: u32 },
+    InterruptVectorConfiguration {},
 }
 
 impl Feature {
     pub fn to_cdw10(&self) -> u32 {
         match self {
             Feature::NumberOfQueues { .. } => 0x7,
+            Feature::InterruptVectorConfiguration { .. } => 0x9,
         }
     }
 }

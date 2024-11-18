@@ -15,6 +15,7 @@ fn main() {
 use core::alloc::Layout;
 use core::sync::atomic::fence;
 
+use bare_test::fdt::PciSpace;
 use bare_test::mem::dma;
 use bare_test::platform::page_size;
 use bare_test::time::delay;
@@ -30,24 +31,30 @@ fn test_uart() {
     let pcie = fdt
         .find_compatible(&["pci-host-ecam-generic"])
         .next()
+        .unwrap()
+        .into_pci()
         .unwrap();
+
     let mut pcie_regs = alloc::vec![];
 
     println!("test nvme");
 
-    println!("pcie: {}", pcie.name);
+    println!("pcie: {}", pcie.node.name);
 
-    for reg in pcie.reg().unwrap() {
+    for reg in pcie.node.reg().unwrap() {
         println!("pcie reg: {:#x}", reg.address);
         pcie_regs.push(iomap((reg.address as usize).into(), reg.size.unwrap()));
     }
 
-    let mut pcie_ranges = alloc::vec![];
+    let mut m32_range = 0..0;
+    let mut m64_range = 0..0;
 
-    for range in pcie.ranges() {
-        println!("pcie range: {:?}", range);
-
-        pcie_ranges.push(range);
+    for range in pcie.ranges().unwrap() {
+        match range.space {
+            PciSpace::Memory32 => m32_range = range.cpu_address..range.size,
+            PciSpace::Memory64 => m64_range = range.cpu_address..range.size,
+            _ => {}
+        }
     }
 
     let base_vaddr = pcie_regs[0];
@@ -83,7 +90,13 @@ fn test_uart() {
                         size,
                         prefetchable,
                     } => {
-                        bar_addr = address as usize;
+                        bar_addr = if address == 0 {
+                            let new_addr = m32_range.start as usize;
+                            unsafe { ep.write_bar(slot, new_addr) };
+                            new_addr
+                        } else {
+                            address as usize
+                        };
                         bar_size = size as usize;
                     }
                     Bar::Memory64 {
@@ -92,8 +105,7 @@ fn test_uart() {
                         prefetchable,
                     } => {
                         bar_addr = if address == 0 {
-                            let bar64_range = pcie_ranges[2];
-                            let new_addr = bar64_range.parent_bus_address as usize;
+                            let new_addr = m64_range.start as usize;
                             unsafe { ep.write_bar(slot, new_addr) };
                             new_addr
                         } else {

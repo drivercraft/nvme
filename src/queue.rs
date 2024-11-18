@@ -5,7 +5,7 @@ use core::{
     sync::atomic::{AtomicU32, Ordering},
 };
 
-use tock_registers::{register_bitfields, register_structs, registers::ReadWrite};
+use tock_registers::register_bitfields;
 
 use crate::{
     command::{self, Feature},
@@ -27,8 +27,7 @@ fn next_id() -> u32 {
         return 0;
     }
 
-    let id = ID_FACTORY.fetch_add(1, Ordering::Relaxed);
-    id
+    ID_FACTORY.fetch_add(1, Ordering::Relaxed)
 }
 
 register_bitfields! [
@@ -86,12 +85,10 @@ impl CommandSet {
 
         let cdw10 = feature.to_cdw10();
         let mut cdw11 = 0;
-
         match feature {
-            Feature::NumberOfQueues { nsq, ncq } => {
-                cdw11 = nsq | ncq << 16;
-            }
-        }
+            Feature::NumberOfQueues { nsq, ncq } => cdw11 = nsq | ncq << 16,
+            Feature::InterruptVectorConfiguration {} => {}
+        };
 
         Self {
             cdw0,
@@ -183,12 +180,9 @@ impl CompletionStatus {
 
 pub struct NvmeQueue<O: OS> {
     pub qid: u32,
-
     pub sq: SubmitQueue<O>,
     pub cq: CompleteQueue<O>,
-
     pub data: DMAVec<u8, O>,
-
     pub reg: NonNull<NvmeReg>,
 }
 
@@ -205,10 +199,6 @@ impl<O: OS> NvmeQueue<O> {
             data,
             reg,
         })
-    }
-
-    pub fn depth(&self) -> usize {
-        NVME_QUEUE_DEPTH
     }
 
     fn reg(&self) -> &NvmeReg {

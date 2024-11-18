@@ -78,9 +78,9 @@ checksum = "f8fe8f5a8a398345e52358e18ff07cc17a568fbca5c6f73873d3a62056309603"
 
 [[package]]
 name = "bare-test"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63601e3fc75837bb41631715dde73a28f64120089652efdf54833857495acf58"
+checksum = "a859f72853c6f416e08c528bf6e9131b9242c6763e89817dffaf04bf23d7c5a7"
 dependencies = [
  "log",
  "sparreal-rt",
@@ -207,9 +207,9 @@ dependencies = [
 
 [[package]]
 name = "fdt-parser"
-version = "0.3.11"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b90290f016ff9bd5de2d0530fe410296d6de674c315091bd4c9d1815e6d2918"
+checksum = "6a27534f7fdc18315d8bd06db48c64e3c3775b4d208c2f83c1e4cc5c2055c06c"
 
 [[package]]
 name = "futures"
@@ -524,9 +524,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "sparreal-kernel"
-version = "0.1.2"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5ab47e44276fe41b801142fbf73b8db10837d82ca4f4bf05e1ca8a1a256885c"
+checksum = "2ec97c901cfa62f084661d91f3e4da089f05327f07407767a66bf97d3816ad15"
 dependencies = [
  "ansi_rgb",
  "buddy_system_allocator",
@@ -556,9 +556,9 @@ dependencies = [
 
 [[package]]
 name = "sparreal-rt"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "454a5b793e5ad2574b134e117337c8b39236160cf05a97ab0898843128fc1c1c"
+checksum = "e1ba7b618ee151dbe2997c9c6db639633c08e07bf6fa231651bfc525f15ce4fb"
 dependencies = [
  "aarch64-cpu",
  "arm-gic-driver",
