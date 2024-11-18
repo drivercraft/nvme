@@ -6,25 +6,14 @@ mod dma;
 mod irq;
 mod nvme;
 
+mod command;
 pub mod err;
 mod nvme2;
 mod queue;
 mod registers;
 
-use core::alloc::Layout;
-use core::marker::PhantomData;
-use core::ptr::NonNull;
-use core::time::Duration;
+use core::{alloc::Layout, ptr::NonNull, time::Duration};
 
-pub use dma::*;
-pub use irq::*;
-use log::info;
-pub use nvme::*;
-use registers::NvmeReg;
-
-pub use self::dma::DmaAllocator;
-pub use self::irq::IrqController;
-pub use self::nvme::NvmeInterface;
 pub use nvme2::Nvme;
 
 pub trait OS {

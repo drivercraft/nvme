@@ -179,6 +179,26 @@ impl NvmeReg {
         debug!("Waiting for ready...");
         spin_for_true(|| self.controller_status.is_set(CSTS::RDY));
     }
+
+    // write submission queue doorbell to notify nvme device
+    pub fn write_sq_y_tail_doolbell(&self, y: usize, tail: u32) {
+        let dstrd = self.controller_capabilities.read(CAP::DSTRD) as usize;
+        unsafe {
+            let ptr = (self as *const NvmeReg as *const u8).add(0x1000 + (2 * y * (4 << dstrd)))
+                as usize as *mut u32;
+            ptr.write_volatile(tail);
+        }
+    }
+
+    pub fn write_cq_y_head_doolbell(&self, y: usize, head: u32) {
+        let dstrd = self.controller_capabilities.read(CAP::DSTRD) as usize;
+        unsafe {
+            let ptr = (self as *const NvmeReg as *const u8)
+                .add(0x1000 + ((2 * y + 1) * (4 << dstrd))) as usize
+                as *mut u32;
+            ptr.write_volatile(head);
+        }
+    }
 }
 
 fn spin_for_true<F>(f: F)

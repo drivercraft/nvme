@@ -1,8 +1,13 @@
-use core::{marker::PhantomData, ptr::NonNull};
+use core::ptr::NonNull;
 
 use log::{debug, info};
 
-use crate::{err::*, queue::NvmeQueue, registers::NvmeReg, OS};
+use crate::{
+    err::*,
+    queue::{AdminAndNvmCommandSetPRP, NvmeQueue},
+    registers::NvmeReg,
+    OS,
+};
 
 pub struct Nvme<O: OS> {
     bar: NonNull<NvmeReg>,
@@ -12,8 +17,8 @@ pub struct Nvme<O: OS> {
 
 impl<O: OS> Nvme<O> {
     pub fn new(bar: NonNull<u8>) -> Result<Self> {
-        let admin_queue = NvmeQueue::new(0, 0)?;
-        let io_queues = NvmeQueue::new(1, 0x8)?;
+        let admin_queue = NvmeQueue::new(0, bar.cast())?;
+        let io_queues = NvmeQueue::new(1, bar.cast())?;
 
         let mut s = Self {
             bar: bar.cast(),
@@ -53,6 +58,10 @@ impl<O: OS> Nvme<O> {
 
         debug!("Enabled ctrl");
     }
+
+
+
+
 
     pub fn version(&self) -> (usize, usize, usize) {
         self.reg().version()
