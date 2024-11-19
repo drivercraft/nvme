@@ -41,7 +41,9 @@ fn test_nvme() {
 
     let mut buff1 = alloc::vec![0u8; ns.lba_size];
 
-    let want = CString::new("hello world!").unwrap();
+    let want_str = "hello world!";
+
+    let want = CString::new(want_str).unwrap();
 
     let want_bytes = want.to_bytes();
 
@@ -53,9 +55,9 @@ fn test_nvme() {
 
     nvme.block_read_sync(&ns, 0, buff.as_mut_slice()).unwrap();
 
-    let s = unsafe { CStr::from_ptr(buff.as_ptr() as _) };
+    let read_result = unsafe { CStr::from_ptr(buff.as_ptr() as _) }.to_str();
 
-    println!("{:?}", s.to_str());
+    assert_eq!(Ok(want_str), read_result);
 
     println!("test passed!");
 }
