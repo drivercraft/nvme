@@ -1,5 +1,0 @@
-[toolchain]
-channel = "nightly"
-components = [ "llvm-tools-preview", "rustfmt" ]
-targets = [ "riscv64gc-unknown-none-elf" ]
-profile = "minimal"

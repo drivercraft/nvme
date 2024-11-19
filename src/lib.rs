@@ -9,7 +9,7 @@ mod nvme;
 mod queue;
 mod registers;
 
-use core::{alloc::Layout, ptr::NonNull, time::Duration};
+use core::{alloc::Layout, ptr::NonNull};
 
 pub use nvme::Nvme;
 
