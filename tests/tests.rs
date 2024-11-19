@@ -12,7 +12,7 @@ fn main() {
     test_main();
 }
 
-use core::{alloc::Layout, ffi::CStr, sync::atomic::fence};
+use core::{alloc::Layout, ffi::CStr};
 
 use alloc::ffi::CString;
 use bare_test::{
@@ -65,11 +65,7 @@ fn test_nvme() {
 pub struct OSImpl;
 
 impl OS for OSImpl {
-    fn sleep(duration: core::time::Duration) {
-        todo!()
-    }
-
-    fn dma_alloc(layout: core::alloc::Layout) -> Option<DMAMem> {
+    fn dma_alloc(layout: Layout) -> Option<DMAMem> {
         unsafe {
             dma::alloc_coherent(layout).map(|m| DMAMem {
                 virt: m.cpu_addr,

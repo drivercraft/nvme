@@ -8,7 +8,7 @@ use core::{
 use tock_registers::register_bitfields;
 
 use crate::{
-    command::{self, Feature, Identify},
+    command::{self, Feature},
     dma::DMAVec,
     err::*,
     registers::NvmeReg,
