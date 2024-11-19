@@ -41,6 +41,10 @@ impl Opcode {
     pub const NVME_MI_SEND: Self = Self::new(0b1, 0b111, 0b1);
     pub const NVME_MI_RECEIVE: Self = Self::new(0b1, 0b111, 0b10);
     pub const DOORBELL_BUFFER_CONFIG: Self = Self::new(0b111, 0b11111, 0b0);
+
+    pub const NVM_FLUSH: Self = Self::new(0b0, 0b000, 0b00);
+    pub const NVM_WRITE: Self = Self::new(0b0, 0b000, 0b01);
+    pub const NVM_READ: Self = Self::new(0b0, 0b000, 0b10);
 }
 
 pub enum Feature {

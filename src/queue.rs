@@ -146,6 +146,40 @@ impl CommandSet {
             ..Default::default()
         }
     }
+
+    pub fn nvm_cmd_read(nsid: u32, paddr: u64, starting_lba: u64, blk_num: u16) -> Self {
+        let cdw0 = Self::cdw0_from_opcode(command::Opcode::NVM_READ);
+        let low = (starting_lba & 0xFFFFFFFF) as u32;
+        let high = (starting_lba >> 32) as u32;
+        let cdw12 = blk_num as u32;
+
+        CommandSet {
+            nsid,
+            cdw0,
+            prp1: paddr,
+            cdw10: low,
+            cdw11: high,
+            cdw12,
+            ..Default::default()
+        }
+    }
+
+    pub fn nvm_cmd_write(nsid: u32, paddr: u64, starting_lba: u64, blk_num: u16) -> Self {
+        let cdw0 = Self::cdw0_from_opcode(command::Opcode::NVM_WRITE);
+        let low = (starting_lba & 0xFFFFFFFF) as u32;
+        let high = (starting_lba >> 32) as u32;
+        let cdw12 = blk_num as u32;
+
+        CommandSet {
+            nsid,
+            cdw0,
+            prp1: paddr,
+            cdw10: low,
+            cdw11: high,
+            cdw12,
+            ..Default::default()
+        }
+    }
 }
 
 impl Submission for CommandSet {

@@ -136,6 +136,54 @@ impl<O: OS> Nvme<O> {
         Ok(res)
     }
 
+    pub fn block_write_sync(
+        &mut self,
+        ns: &Namespace,
+        block_start: u64,
+        buff: &[u8],
+    ) -> Result<()> {
+        assert!(
+            buff.len() % ns.lba_size == 0,
+            "buffer size must be multiple of lba size"
+        );
+
+        let mut data = DMAVec::<u8, O>::zeros(buff.len())?;
+
+        data.copy_from_slice(buff);
+
+        let blk_num = buff.len() / ns.lba_size;
+
+        let cmd = CommandSet::nvm_cmd_write(ns.id, data.bus_addr(), block_start, blk_num as _);
+
+        self.io_queues.command_sync(cmd)?;
+
+        Ok(())
+    }
+
+    pub fn block_read_sync(
+        &mut self,
+        ns: &Namespace,
+        block_start: u64,
+        buff: &mut [u8],
+    ) -> Result<()> {
+        assert!(
+            buff.len() % ns.lba_size == 0,
+            "buffer size must be multiple of lba size"
+        );
+
+        let data = DMAVec::<u8, O>::zeros(buff.len())?;
+
+        let blk_num = buff.len() / ns.lba_size;
+
+        let cmd = CommandSet::nvm_cmd_read(ns.id, data.bus_addr(), block_start, blk_num as _);
+
+        self.io_queues.command_sync(cmd)?;
+
+        buff.copy_from_slice(&data);
+
+        Ok(())
+    }
+
     pub fn version(&self) -> (usize, usize, usize) {
         self.reg().version()
     }

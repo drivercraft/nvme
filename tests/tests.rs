@@ -12,19 +12,20 @@ fn main() {
     test_main();
 }
 
-use core::alloc::Layout;
-use core::sync::atomic::fence;
+use core::{alloc::Layout, ffi::CStr, sync::atomic::fence};
 
-use bare_test::fdt::PciSpace;
-use bare_test::mem::dma;
-use bare_test::platform::page_size;
-use bare_test::time::delay;
-use bare_test::{driver::device_tree::get_device_tree, mem::mmu::iomap, println};
+use alloc::ffi::CString;
+use bare_test::{
+    driver::device_tree::get_device_tree,
+    fdt::PciSpace,
+    mem::{dma, mmu::iomap},
+    platform::page_size,
+    println,
+};
 use byte_unit::Byte;
 use log::*;
 use nvme_driver::*;
-use pcie::preludes::*;
-use pcie::PciDevice;
+use pcie::{preludes::*, PciDevice};
 
 #[test_case]
 fn test_nvme() {
@@ -38,7 +39,23 @@ fn test_nvme() {
 
     let ns = namespace_list[0];
 
-    
+    let mut buff1 = alloc::vec![0u8; ns.lba_size];
+
+    let want = CString::new("hello world!").unwrap();
+
+    let want_bytes = want.to_bytes();
+
+    buff1[..want_bytes.len()].copy_from_slice(want_bytes);
+
+    nvme.block_write_sync(&ns, 0, buff1.as_mut_slice()).unwrap();
+
+    let mut buff = alloc::vec![0u8; ns.lba_size];
+
+    nvme.block_read_sync(&ns, 0, buff.as_mut_slice()).unwrap();
+
+    let s = unsafe { CStr::from_ptr(buff.as_ptr() as _) };
+
+    println!("{:?}", s.to_str());
 
     println!("test passed!");
 }
