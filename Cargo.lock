@@ -8,16 +8,7 @@ version = "10.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a21cd0131c25c438e19cd6a774adf7e3f64f7f4d723022882facc2dee0f8bc9"
 dependencies = [
- "tock-registers 0.9.0",
-]
-
-[[package]]
-name = "aho-corasick"
-version = "1.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e60d3430d3a69478ad0993f19238d2df97c507009a52b3c10addcd7f6bcb916"
-dependencies = [
- "memchr",
+ "tock-registers",
 ]
 
 [[package]]
@@ -36,10 +27,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea915a43d058031833f12ccf489e6024f368fe0df994dcd404e8abd234898623"
 dependencies = [
  "aarch64-cpu",
- "bitflags 2.6.0",
+ "bitflags",
  "enum_dispatch",
  "log",
- "tock-registers 0.9.0",
+ "tock-registers",
 ]
 
 [[package]]
@@ -48,11 +39,11 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "876d8b1707dc1e8b07936ef9a8177a59eec7d0c850d54e0eb5fec705e3de05fa"
 dependencies = [
- "bitflags 2.6.0",
+ "bitflags",
  "embedded-io",
  "embedded-io-async",
  "spin_on",
- "tock-registers 0.9.0",
+ "tock-registers",
 ]
 
 [[package]]
@@ -77,12 +68,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
-name = "bare-metal"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8fe8f5a8a398345e52358e18ff07cc17a568fbca5c6f73873d3a62056309603"
-
-[[package]]
 name = "bare-test"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -97,12 +82,6 @@ name = "bit_field"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc827186963e592360843fb5ba4b973e145841266c1357f7180c43526f2e5b61"
-
-[[package]]
-name = "bitflags"
-version = "1.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
@@ -136,27 +115,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8334215b81e418a0a7bdb8ef0849474f40bb10c8b71f1c4ed315cff49f32494d"
 
 [[package]]
-name = "cfg-if"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
-
-[[package]]
 name = "chrono"
 version = "0.4.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a21f936df1771bf62b77f047b726c4625ff2e8aa607c01ec06e5a05bd8463401"
 dependencies = [
  "num-traits",
-]
-
-[[package]]
-name = "cortex-a"
-version = "7.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdecfbb28672ad3664e71ae05a398a52df430d86d660691501b28968cc4467e6"
-dependencies = [
- "tock-registers 0.7.0",
 ]
 
 [[package]]
@@ -171,16 +135,6 @@ dependencies = [
 
 [[package]]
 name = "embedded-hal"
-version = "0.2.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35949884794ad573cf46071e41c9b60efb0cb311e3ca01f7af807af1debc66ff"
-dependencies = [
- "nb 0.1.3",
- "void",
-]
-
-[[package]]
-name = "embedded-hal"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
@@ -191,7 +145,7 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c4c685bbef7fe13c3c6dd4da26841ed3980ef33e841cddfa15ce8a8fb3f1884"
 dependencies = [
- "embedded-hal 1.0.0",
+ "embedded-hal",
 ]
 
 [[package]]
@@ -289,26 +243,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lazy_static"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
-
-[[package]]
-name = "lock"
-version = "0.1.0"
-source = "git+https://github.com/DeathWish5/kernel-sync?rev=8486b8#8486b817a71ec5141836e00c817fefb94c9cfbb7"
-dependencies = [
- "cfg-if",
- "cortex-a",
- "raw-cpuid",
- "riscv",
- "spin",
- "tock-registers 0.7.0",
- "x86_64",
-]
-
-[[package]]
 name = "lock_api"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -325,31 +259,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
-name = "memchr"
-version = "2.7.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
-
-[[package]]
 name = "memory_addr"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f769efcf10b9dfb4c913bebb409cda77b1a3f072b249bf5465e250bcb30eb49"
-
-[[package]]
-name = "nb"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "801d31da0513b6ec5214e9bf433a77966320625a37860f910be265be6e18d06f"
-dependencies = [
- "nb 1.1.0",
-]
-
-[[package]]
-name = "nb"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d5439c4ad607c3c23abf66de8c8bf57ba8adcd1f129e699851a6e43935d339d"
 
 [[package]]
 name = "num-traits"
@@ -361,17 +274,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "nvme_driver"
+name = "nvme-driver"
 version = "0.2.0"
 dependencies = [
  "bare-test",
  "byte-unit",
- "lock",
  "log",
  "pcie",
  "sparreal-macros",
- "tock-registers 0.9.0",
- "volatile 0.3.0",
+ "tock-registers",
 ]
 
 [[package]]
@@ -387,7 +298,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acf197095e2be67e34ecec01c1bc645e8e1c4eb8736ecb9eaf47419fe00cbfcf"
 dependencies = [
  "aarch64-cpu",
- "bitflags 2.6.0",
+ "bitflags",
  "log",
 ]
 
@@ -397,7 +308,7 @@ version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff9fda94ced6f50f4e982705c91fcec85cdc0e95e766df030ed912b26d7f2c0e"
 dependencies = [
- "bitflags 2.6.0",
+ "bitflags",
  "log",
 ]
 
@@ -413,7 +324,7 @@ version = "0.10.0"
 source = "git+https://github.com/ZR233/pci_types.git?branch=set_bus#bd81923619d9a8aecbd52efb96266ff9765cc23e"
 dependencies = [
  "bit_field",
- "bitflags 2.6.0",
+ "bitflags",
 ]
 
 [[package]]
@@ -422,11 +333,11 @@ version = "0.1.0"
 source = "git+https://gitee.com/zr233/pcie#6a04a2388b8d5afe819d231806f55a429fac0b0b"
 dependencies = [
  "bit_field",
- "embedded-hal 1.0.0",
+ "embedded-hal",
  "log",
  "pci_types",
- "tock-registers 0.9.0",
- "volatile 0.6.1",
+ "tock-registers",
+ "volatile",
 ]
 
 [[package]]
@@ -460,71 +371,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "raw-cpuid"
-version = "10.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c297679cb867470fa8c9f67dbba74a78d78e3e98d7cf2b08d6d71540f797332"
-dependencies = [
- "bitflags 1.3.2",
-]
-
-[[package]]
-name = "regex"
-version = "1.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b544ef1b4eac5dc2db33ea63606ae9ffcfac26c1416a2806ae0bf5f56b201191"
-dependencies = [
- "aho-corasick",
- "memchr",
- "regex-automata",
- "regex-syntax",
-]
-
-[[package]]
-name = "regex-automata"
-version = "0.4.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "809e8dc61f6de73b46c85f4c96486310fe304c434cfa43669d7b40f711150908"
-dependencies = [
- "aho-corasick",
- "memchr",
- "regex-syntax",
-]
-
-[[package]]
-name = "regex-syntax"
-version = "0.8.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
-
-[[package]]
 name = "rgb"
 version = "0.8.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57397d16646700483b67d2dd6511d79318f9d057fdbd21a4066aeac8b41d310a"
 dependencies = [
  "bytemuck",
-]
-
-[[package]]
-name = "riscv"
-version = "0.7.0"
-source = "git+https://github.com/rust-embedded/riscv?rev=cd31989ba1#cd31989ba11d5d64e1addd8aab98bfb00dd927d5"
-dependencies = [
- "bare-metal",
- "bit_field",
- "embedded-hal 0.2.7",
- "riscv-target",
-]
-
-[[package]]
-name = "riscv-target"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88aa938cda42a0cf62a20cfe8d139ff1af20c2e681212b5b34adb5a58333f222"
-dependencies = [
- "lazy_static",
- "regex",
 ]
 
 [[package]]
@@ -536,12 +388,6 @@ dependencies = [
  "arrayvec",
  "num-traits",
 ]
-
-[[package]]
-name = "rustversion"
-version = "1.0.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e819f2bc632f285be6d7cd36e25940d45b2391dd6d9b939e79de557f7014248"
 
 [[package]]
 name = "scopeguard"
@@ -591,7 +437,7 @@ dependencies = [
  "arm-gic-driver",
  "arm-pl011-rs",
  "arm_pl031",
- "bitflags 2.6.0",
+ "bitflags",
  "driver-interface",
  "embedded-io",
  "fdt-parser",
@@ -602,7 +448,7 @@ dependencies = [
  "page-table-generic",
  "sparreal-kernel",
  "sparreal-macros",
- "tock-registers 0.9.0",
+ "tock-registers",
 ]
 
 [[package]]
@@ -636,12 +482,6 @@ dependencies = [
 
 [[package]]
 name = "tock-registers"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ee8fba06c1f4d0b396ef61a54530bb6b28f0dc61c38bc8bc5a5a48161e6282e"
-
-[[package]]
-name = "tock-registers"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b9e2fdb3a1e862c0661768b7ed25390811df1947a8acbfbefe09b47078d93c4"
@@ -659,37 +499,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "86bd8d4e895da8537e5315b8254664e6b769c4ff3db18321b297a1e7004392e3"
 
 [[package]]
-name = "void"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
-
-[[package]]
-name = "volatile"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8e76fae08f03f96e166d2dfda232190638c10e0383841252416f9cfe2ae60e6"
-
-[[package]]
-name = "volatile"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "442887c63f2c839b346c192d047a7c87e73d0689c9157b00b53dcc27dd5ea793"
-
-[[package]]
 name = "volatile"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af8ca9a5d4debca0633e697c88269395493cebf2e10db21ca2dbde37c1356452"
-
-[[package]]
-name = "x86_64"
-version = "0.14.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96cb6fd45bfeab6a5055c5bffdb08768bd0c069f1d946debe585bbb380a7c062"
-dependencies = [
- "bit_field",
- "bitflags 2.6.0",
- "rustversion",
- "volatile 0.4.6",
-]

@@ -1,31 +1,12 @@
-# nvme drivers
-nvme drivers for riscv64 on Qemu and fu740 board
+# NVME Driver
 
-## install qemu
-
-```
-cd example
-make install_qemu
-```
-
-## install env
-```
-cd example
-make env
-```
+nvme driver 1.4
 
 ## example run
 
-```
-cd example
-dd if=/dev/zero bs=1M count=128 of=nvme.img
-make qemu-nvme
-cat | head -c 1024 nvme.img | xxd
-```
+install qemu.
 
-or
-
+```shell
+./img.sh
+cargo test --test tests --  --show-output
 ```
-sh ./run.sh
-```
-

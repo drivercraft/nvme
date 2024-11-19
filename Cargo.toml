@@ -1,14 +1,12 @@
 [package]
-name = "nvme_driver"
+name = "nvme-driver"
 version = "0.2.0"
 edition = "2021"
-authors = ["周睿 <zrufo747@outlook.com>", "Le Chen <lenuulan@gmail.com>"]
+authors = ["周睿 <zrufo747@outlook.com>"]
 description = "nvme driver"
 
 
 [dependencies]
-volatile = "0.3"
-lock = { git = "https://github.com/DeathWish5/kernel-sync", rev = "8486b8" }
 tock-registers = "0.9.0"
 log = "0.4"
 
