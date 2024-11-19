@@ -1,9 +1,13 @@
 use core::ptr::NonNull;
 
+use alloc::vec::Vec;
 use log::{debug, info};
 
 use crate::{
-    command::Feature,
+    command::{
+        self, Feature, Identify, IdentifyActiveNamespaceList, IdentifyNamespaceDataStructure,
+    },
+    dma::DMAVec,
     err::*,
     queue::{CommandSet, NvmeQueue},
     registers::NvmeReg,
@@ -41,6 +45,24 @@ impl<O: OS> Nvme<O> {
         debug!("IO queue ok.");
 
         Ok(s)
+    }
+
+    pub fn namespace_list(&mut self) -> Result<Vec<Namespace>> {
+        let id_list = self.get_identfy(IdentifyActiveNamespaceList::new())?;
+        let mut out = Vec::new();
+
+        for id in id_list {
+            let ns = self.get_identfy(IdentifyNamespaceDataStructure::new(id))?;
+
+            out.push(Namespace {
+                id,
+                lba_size: ns.lba_size as _,
+                lba_count: ns.namespace_size as _,
+                metadata_size: ns.metadata_size as _,
+            });
+        }
+
+        Ok(out)
     }
 
     // config admin queue
@@ -98,6 +120,22 @@ impl<O: OS> Nvme<O> {
         Ok(())
     }
 
+    pub fn get_identfy<T: Identify>(&mut self, mut want: T) -> Result<T::Output> {
+        let cmd = want.command_set_mut();
+
+        cmd.cdw0 = CommandSet::cdw0_from_opcode(command::Opcode::IDENTIFY);
+        cmd.cdw10 = T::CNS;
+
+        let data = DMAVec::<u8, O>::zeros(0x1000)?;
+        cmd.prp1 = data.bus_addr();
+
+        self.admin_queue.command_sync(*cmd)?;
+
+        let res = want.parse(&data);
+
+        Ok(res)
+    }
+
     pub fn version(&self) -> (usize, usize, usize) {
         self.reg().version()
     }
@@ -105,4 +143,12 @@ impl<O: OS> Nvme<O> {
     fn reg(&self) -> &NvmeReg {
         unsafe { self.bar.as_ref() }
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Namespace {
+    pub id: u32,
+    pub lba_size: usize,
+    pub lba_count: usize,
+    pub metadata_size: usize,
 }

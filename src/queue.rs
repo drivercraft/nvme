@@ -8,7 +8,7 @@ use core::{
 use tock_registers::register_bitfields;
 
 use crate::{
-    command::{self, Feature},
+    command::{self, Feature, Identify},
     dma::DMAVec,
     err::*,
     registers::NvmeReg,
@@ -76,7 +76,7 @@ pub struct CommandSet {
 }
 
 impl CommandSet {
-    fn cdw0_from_opcode(opcode: command::Opcode) -> u32 {
+    pub fn cdw0_from_opcode(opcode: command::Opcode) -> u32 {
         (CommandDword0::Opcode.val(opcode.as_u32()) + CommandDword0::CommandId.val(next_id())).value
     }
 

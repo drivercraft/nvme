@@ -1,5 +1,12 @@
 #![allow(unused)]
 
+use core::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
+
+use alloc::vec::Vec;
+use log::debug;
+
+use crate::queue::CommandSet;
+
 #[repr(transparent)]
 pub struct Opcode(u8);
 
@@ -47,5 +54,126 @@ impl Feature {
             Feature::NumberOfQueues { .. } => 0x7,
             Feature::InterruptVectorConfiguration { .. } => 0x9,
         }
+    }
+}
+
+pub trait Identify {
+    const CNS: u32;
+    type Output;
+
+    fn command_set_mut(&mut self) -> &mut CommandSet;
+    fn parse(&self, data: &[u8]) -> Self::Output;
+}
+
+pub struct IdentifyActiveNamespaceList {
+    command_set: CommandSet,
+}
+
+impl IdentifyActiveNamespaceList {
+    pub fn new() -> Self {
+        let mut command_set = CommandSet::default();
+        Self { command_set }
+    }
+}
+
+impl Identify for IdentifyActiveNamespaceList {
+    const CNS: u32 = 0x02;
+
+    type Output = Vec<u32>;
+
+    fn parse(&self, data: &[u8]) -> Self::Output {
+        let mut id_list = Vec::new();
+
+        let raw = unsafe { &*slice_from_raw_parts(data.as_ptr() as *const u32, data.len() / 4) };
+
+        for id in raw {
+            if *id == 0 {
+                break;
+            }
+            id_list.push(*id);
+        }
+
+        id_list
+    }
+
+    fn command_set_mut(&mut self) -> &mut CommandSet {
+        &mut self.command_set
+    }
+}
+
+pub struct IdentifyNamespaceDataStructure {
+    command_set: CommandSet,
+}
+
+impl IdentifyNamespaceDataStructure {
+    pub fn new(nsid: u32) -> Self {
+        let mut command_set = CommandSet {
+            nsid,
+            ..Default::default()
+        };
+        Self { command_set }
+    }
+}
+
+impl Identify for IdentifyNamespaceDataStructure {
+    const CNS: u32 = 0x0;
+
+    type Output = NamespaceDataStructure;
+
+    fn parse(&self, data: &[u8]) -> Self::Output {
+        let raw = unsafe { &*slice_from_raw_parts(data.as_ptr() as *const u32, data.len() / 4) };
+        let number_of_lba_formats = data[25];
+        let formatted_lba_size_field = data[26];
+        let has_metadata = (formatted_lba_size_field >> 4) & 1 == 1;
+
+        let lba_fmt_list = unsafe {
+            &*slice_from_raw_parts(
+                data.as_ptr().add(128) as *const LBAFormatDataStructure,
+                number_of_lba_formats as usize,
+            )
+        };
+
+        let lba_size_idx = (formatted_lba_size_field & 0b1111) as usize;
+
+        let lba_fmt = lba_fmt_list[lba_size_idx];
+
+        NamespaceDataStructure {
+            namespace_size: raw[0],
+            namespcae_capacity: raw[1],
+            namespace_nused: raw[2],
+            lba_size: 2u32.pow(lba_fmt.lba_data_size as u32),
+            metadata_size: if has_metadata {
+                data[27] as _
+            } else {
+                lba_fmt.metadata_size as _
+            },
+        }
+    }
+
+    fn command_set_mut(&mut self) -> &mut CommandSet {
+        &mut self.command_set
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct NamespaceDataStructure {
+    pub namespace_size: u32,
+    pub namespcae_capacity: u32,
+    pub namespace_nused: u32,
+    pub lba_size: u32,
+    pub metadata_size: u32,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+struct LBAFormatDataStructure {
+    metadata_size: u16,
+    lba_data_size: u8,
+    other: u8,
+}
+
+impl LBAFormatDataStructure {
+    fn relative_performance(&self) -> bool {
+        self.other & 1 > 0
     }
 }
