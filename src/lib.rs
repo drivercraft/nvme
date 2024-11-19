@@ -2,11 +2,8 @@
 
 extern crate alloc;
 
-mod dma;
-mod irq;
-mod nvme;
-
 mod command;
+mod dma;
 pub mod err;
 mod nvme2;
 mod queue;

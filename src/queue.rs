@@ -216,13 +216,11 @@ pub struct NvmeQueue<O: OS> {
     pub qid: u32,
     pub sq: SubmitQueue<O>,
     pub cq: CompleteQueue<O>,
-    pub data: DMAVec<u8, O>,
     pub reg: NonNull<NvmeReg>,
 }
 
 impl<O: OS> NvmeQueue<O> {
     pub fn new(qid: u32, reg: NonNull<NvmeReg>) -> Result<Self> {
-        let data = DMAVec::zeros(O::page_size() * 4)?;
         let submit_queue = SubmitQueue::new(NVME_QUEUE_DEPTH)?;
         let complete_queue = CompleteQueue::new(NVME_QUEUE_DEPTH)?;
 
@@ -230,7 +228,6 @@ impl<O: OS> NvmeQueue<O> {
             sq: submit_queue,
             cq: complete_queue,
             qid,
-            data,
             reg,
         })
     }
