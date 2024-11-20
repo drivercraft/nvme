@@ -30,7 +30,10 @@ use pcie::{preludes::*, PciDevice};
 #[test_case]
 fn test_nvme() {
     let mut nvme = get_nvme();
-    let namespace_list = nvme.namespace_list().unwrap();
+    let namespace_list = nvme
+        .namespace_list()
+        .inspect_err(|e| error!("{:?}", e))
+        .unwrap();
     for ns in &namespace_list {
         let space = Byte::from_u64(ns.lba_size as u64 * ns.lba_count as u64);
 

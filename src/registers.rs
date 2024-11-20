@@ -188,12 +188,6 @@ impl NvmeReg {
         debug!("Ready!");
     }
 
-    pub fn set_controller_sq_cq_size(&self, sq_size: u32, cq_size: u32) {
-        self.controller_configuration.modify(
-            CC::IOSubmissionQueueEntrySize.val(sq_size)
-                + CC::IOCompletionQueueEntrySize.val(cq_size),
-        );
-    }
 
     // write submission queue doorbell to notify nvme device
     pub fn write_sq_y_tail_doolbell(&self, y: usize, tail: u32) {

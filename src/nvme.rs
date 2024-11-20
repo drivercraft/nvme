@@ -5,7 +5,8 @@ use log::{debug, info};
 
 use crate::{
     command::{
-        self, Feature, Identify, IdentifyActiveNamespaceList, IdentifyNamespaceDataStructure,
+        self, Feature, Identify, IdentifyActiveNamespaceList, IdentifyController,
+        IdentifyNamespaceDataStructure,
     },
     dma::DMAVec,
     err::*,
@@ -49,6 +50,11 @@ impl<O: OS> Nvme<O> {
         self.nvme_configure_admin_queue();
 
         self.reg().setup_controller_settings();
+
+        let controller = self.get_identfy(IdentifyController::new())?;
+
+        debug!("Controller: {:?}", controller);
+
         self.config_io_queue()?;
 
         debug!("IO queue ok.");
