@@ -72,45 +72,45 @@ impl<O: OS> Nvme<O> {
         debug!("Namespace ok.");
         Ok(())
     }
-    pub fn namespace_list(&mut self) -> Result<Vec<Namespace>> {
-        let mut out = Vec::new();
-
-        for i in 0..self.num_ns {
-            let id = i as u32 + 1;
-
-            let ns = self.get_identfy(IdentifyNamespaceDataStructure::new(id))?;
-
-            if let Some(ns) = ns {
-                out.push(Namespace {
-                    id,
-                    lba_size: ns.lba_size as _,
-                    lba_count: ns.namespace_size as _,
-                    metadata_size: ns.metadata_size as _,
-                });
-            }
-        }
-
-        Ok(out)
-    }
     // pub fn namespace_list(&mut self) -> Result<Vec<Namespace>> {
-    //     let id_list = self.get_identfy(IdentifyActiveNamespaceList::new())?;
     //     let mut out = Vec::new();
 
-    //     for id in id_list {
-    //         let ns = self
-    //             .get_identfy(IdentifyNamespaceDataStructure::new(id))?
-    //             .unwrap();
+    //     for i in 0..self.num_ns {
+    //         let id = i as u32 + 1;
 
-    //         out.push(Namespace {
-    //             id,
-    //             lba_size: ns.lba_size as _,
-    //             lba_count: ns.namespace_size as _,
-    //             metadata_size: ns.metadata_size as _,
-    //         });
+    //         let ns = self.get_identfy(IdentifyNamespaceDataStructure::new(id))?;
+
+    //         if let Some(ns) = ns {
+    //             out.push(Namespace {
+    //                 id,
+    //                 lba_size: ns.lba_size as _,
+    //                 lba_count: ns.namespace_size as _,
+    //                 metadata_size: ns.metadata_size as _,
+    //             });
+    //         }
     //     }
 
     //     Ok(out)
     // }
+    pub fn namespace_list(&mut self) -> Result<Vec<Namespace>> {
+        let id_list = self.get_identfy(IdentifyActiveNamespaceList::new())?;
+        let mut out = Vec::new();
+
+        for id in id_list {
+            let ns = self
+                .get_identfy(IdentifyNamespaceDataStructure::new(id))?
+                .unwrap();
+
+            out.push(Namespace {
+                id,
+                lba_size: ns.lba_size as _,
+                lba_count: ns.namespace_size as _,
+                metadata_size: ns.metadata_size as _,
+            });
+        }
+
+        Ok(out)
+    }
 
     // config admin queue
     // 1. set admin queue(cq && sq) size
