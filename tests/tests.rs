@@ -60,6 +60,8 @@ fn test_nvme() {
 
     let read_result = unsafe { CStr::from_ptr(buff.as_ptr() as _) }.to_str();
 
+    println!("read result: {:?}", read_result);
+
     assert_eq!(Ok(want_str), read_result);
 
     println!("test passed!");

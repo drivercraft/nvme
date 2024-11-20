@@ -89,27 +89,34 @@ impl IdentifyNamespaceDataStructure {
 impl Identify for IdentifyNamespaceDataStructure {
     const CNS: u32 = 0x0;
 
-    type Output = NamespaceDataStructure;
+    type Output = Option<NamespaceDataStructure>;
 
     fn parse(&self, data: &[u8]) -> Self::Output {
         let raw = unsafe { &*slice_from_raw_parts(data.as_ptr() as *const u32, data.len() / 4) };
         unsafe {
+            asm!("dc ivac, {}; isb", in(reg) raw.as_ptr());
+            if raw[0] == 0 {
+                return None;
+            }
             let number_of_lba_formats = data.as_ptr().add(25).read_volatile();
-            let formatted_lba_size_field = data[26];
+            let formatted_lba_size_field = data.as_ptr().add(26).read_volatile();
             let has_metadata = (formatted_lba_size_field >> 4) & 1 == 1;
 
-            let lba_fmt_list = unsafe {
-                &*slice_from_raw_parts(
-                    data.as_ptr().add(128) as *const LBAFormatDataStructure,
-                    number_of_lba_formats as usize,
-                )
-            };
+            let lba_fmt_list = data.as_ptr().add(128) as *const LBAFormatDataStructure;
 
             let lba_size_idx = (formatted_lba_size_field & 0b1111) as usize;
 
-            let lba_fmt = lba_fmt_list[lba_size_idx];
+            let lba_fmt = if lba_size_idx > 0 {
+                lba_fmt_list.add(lba_size_idx).read_volatile()
+            } else {
+                LBAFormatDataStructure {
+                    metadata_size: 0,
+                    lba_data_size: 9,
+                    other: 0,
+                }
+            };
 
-            NamespaceDataStructure {
+            Some(NamespaceDataStructure {
                 namespace_size: raw[0],
                 namespcae_capacity: raw[1],
                 namespace_nused: raw[2],
@@ -119,7 +126,7 @@ impl Identify for IdentifyNamespaceDataStructure {
                 } else {
                     lba_fmt.metadata_size as _
                 },
-            }
+            })
         }
     }
 

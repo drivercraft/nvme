@@ -200,7 +200,7 @@ struct NvmeCompletion {
 
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Default)]
-struct CompletionStatus(u16);
+struct CompletionStatus(pub u16);
 
 impl CompletionStatus {
     pub fn phase(&self) -> bool {
@@ -209,6 +209,10 @@ impl CompletionStatus {
 
     fn is_success(&self) -> bool {
         self.0 & (1 << 1) == 0
+    }
+
+    pub fn do_not_retry(&self) -> bool {
+        self.0 & (1 << 15) > 0
     }
 }
 
@@ -244,15 +248,17 @@ impl<O: OS> NvmeQueue<O> {
     pub fn command_sync(&mut self, data: CommandSet) -> Result<()> {
         self.submit_admin_data(data);
         let complete = self.cq.spin_for_complete();
-        
-        
-        
+
         self.reg()
             .write_cq_y_head_doolbell(self.qid as _, self.cq.head);
 
         if complete.status.is_success() {
             Ok(())
         } else {
+            debug!(
+                "command failed: status {:#x}, result {:#x}",
+                complete.status.0, complete.result
+            );
             Err(Error::Unknown("send command failed"))
         }
     }
