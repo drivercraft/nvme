@@ -22,8 +22,8 @@ pub struct Nvme<O: OS> {
 
 impl<O: OS> Nvme<O> {
     pub fn new(bar: NonNull<u8>) -> Result<Self> {
-        let admin_queue = NvmeQueue::new(0, bar.cast())?;
-        let io_queues = NvmeQueue::new(1, bar.cast())?;
+        let admin_queue = NvmeQueue::new(0, bar.cast(), 64, 64)?;
+        let io_queues = NvmeQueue::new(1, bar.cast(), 6, 4)?;
 
         let mut s = Self {
             bar: bar.cast(),
@@ -38,13 +38,28 @@ impl<O: OS> Nvme<O> {
             version.0, version.1, version.2
         );
 
-        s.nvme_configure_admin_queue();
-
-        s.config_io_queue()?;
-
-        debug!("IO queue ok.");
+        s.init()?;
 
         Ok(s)
+    }
+
+    fn init(&mut self) -> Result {
+        self.reg().reset();
+
+        self.nvme_configure_admin_queue();
+
+        self.reg().setup_controller_settings();
+        self.config_io_queue()?;
+
+        debug!("IO queue ok.");
+        loop {
+            let id_list = self.get_identfy(IdentifyActiveNamespaceList::new())?;
+            if !id_list.is_empty() {
+                break;
+            }
+        }
+        debug!("Namespace ok.");
+        Ok(())
     }
 
     pub fn namespace_list(&mut self) -> Result<Vec<Namespace>> {
@@ -80,10 +95,6 @@ impl<O: OS> Nvme<O> {
 
         self.reg()
             .set_admin_completion_queue_base_address(self.admin_queue.cq.bus_addr());
-
-        self.reg().enable_ctrl();
-
-        debug!("Enabled ctrl");
     }
 
     fn config_io_queue(&mut self) -> Result {

@@ -186,7 +186,9 @@ fn get_nvme() -> Nvme<OSImpl> {
                     addr = Some(iomap(bar_addr.into(), bar_size));
                 }
 
-                let nvme = Nvme::<OSImpl>::new(addr.unwrap()).unwrap();
+                let nvme = Nvme::<OSImpl>::new(addr.unwrap())
+                    .inspect_err(|e| error!("{:?}", e))
+                    .unwrap();
                 return nvme;
             }
         }

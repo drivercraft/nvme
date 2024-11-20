@@ -1,4 +1,4 @@
-use core::{alloc::Layout, marker::PhantomData};
+use core::{alloc::Layout, arch::asm, marker::PhantomData};
 
 use crate::{err::*, DMAMem, OS};
 
@@ -11,7 +11,8 @@ pub struct DMAVec<T, O: OS> {
 impl<T, O: OS> DMAVec<T, O> {
     pub fn zeros(len: usize) -> Result<Self> {
         let size = len * core::mem::size_of::<T>();
-        let layout = Layout::from_size_align(size, size).map_err(|_| Error::Layout)?;
+        let layout =
+            Layout::from_size_align(size, size.max(O::page_size())).map_err(|_| Error::Layout)?;
         let dma = O::dma_alloc(layout).ok_or(Error::NoMemory)?;
         Ok(DMAVec {
             _marker: PhantomData,
@@ -35,7 +36,11 @@ impl<T, O: OS> core::ops::Deref for DMAVec<T, O> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
-        unsafe { core::slice::from_raw_parts(self.dma.virt.cast().as_ptr(), self.len) }
+        unsafe {
+            let ptr: *mut T = self.dma.virt.cast().as_ptr();
+
+            core::slice::from_raw_parts(ptr, self.len)
+        }
     }
 }
 

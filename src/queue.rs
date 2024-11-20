@@ -1,10 +1,12 @@
 use core::{
+    arch::asm,
     hint::spin_loop,
     mem,
     ptr::NonNull,
     sync::atomic::{AtomicU32, Ordering},
 };
 
+use log::{debug, trace};
 use tock_registers::register_bitfields;
 
 use crate::{
@@ -14,8 +16,6 @@ use crate::{
     registers::NvmeReg,
     OS,
 };
-
-const NVME_QUEUE_DEPTH: usize = 1024;
 
 static ID_FACTORY: AtomicU32 = AtomicU32::new(0);
 
@@ -220,9 +220,9 @@ pub struct NvmeQueue<O: OS> {
 }
 
 impl<O: OS> NvmeQueue<O> {
-    pub fn new(qid: u32, reg: NonNull<NvmeReg>) -> Result<Self> {
-        let submit_queue = SubmitQueue::new(NVME_QUEUE_DEPTH)?;
-        let complete_queue = CompleteQueue::new(NVME_QUEUE_DEPTH)?;
+    pub fn new(qid: u32, reg: NonNull<NvmeReg>, sq: usize, cq: usize) -> Result<Self> {
+        let submit_queue = SubmitQueue::new(sq)?;
+        let complete_queue = CompleteQueue::new(cq)?;
 
         Ok(NvmeQueue {
             sq: submit_queue,
@@ -244,6 +244,9 @@ impl<O: OS> NvmeQueue<O> {
     pub fn command_sync(&mut self, data: CommandSet) -> Result<()> {
         self.submit_admin_data(data);
         let complete = self.cq.spin_for_complete();
+        
+        
+        
         self.reg()
             .write_cq_y_head_doolbell(self.qid as _, self.cq.head);
 
@@ -271,7 +274,9 @@ impl<O: OS> SubmitQueue<O> {
         let item = &mut self.queue[self.tail as usize] as *mut NvmeSubmission;
         unsafe {
             item.write_volatile(data.to_submission());
+            asm!("dc cvac, {}; isb", in(reg) item);
         }
+
         self.tail += 1;
         if self.tail >= self.len() as u32 {
             self.tail = 0;
@@ -306,7 +311,12 @@ impl<O: OS> CompleteQueue<O> {
 
     // check if there is completed command in completion queue
     fn complete(&self) -> Option<NvmeCompletion> {
-        let cqe = unsafe { self.queue.as_ptr().add(self.head as _).read_volatile() };
+        let cqe = unsafe {
+            let cqe_ptr = self.queue.as_ptr().add(self.head as _);
+            asm!("dc ivac, {}; isb", in(reg) cqe_ptr);
+            cqe_ptr.read_volatile()
+        };
+
         let complete = cqe.status.phase() != self.phase;
 
         if complete {

@@ -1,6 +1,9 @@
 #![allow(unused)]
 
-use core::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
+use core::{
+    arch::asm,
+    ptr::{slice_from_raw_parts, slice_from_raw_parts_mut},
+};
 
 use alloc::vec::Vec;
 use log::debug;
@@ -69,6 +72,62 @@ pub trait Identify {
     fn parse(&self, data: &[u8]) -> Self::Output;
 }
 
+pub struct IdentifyNamespaceDataStructure {
+    command_set: CommandSet,
+}
+
+impl IdentifyNamespaceDataStructure {
+    pub fn new(nsid: u32) -> Self {
+        let mut command_set = CommandSet {
+            nsid,
+            ..Default::default()
+        };
+        Self { command_set }
+    }
+}
+
+impl Identify for IdentifyNamespaceDataStructure {
+    const CNS: u32 = 0x0;
+
+    type Output = NamespaceDataStructure;
+
+    fn parse(&self, data: &[u8]) -> Self::Output {
+        let raw = unsafe { &*slice_from_raw_parts(data.as_ptr() as *const u32, data.len() / 4) };
+        unsafe {
+            let number_of_lba_formats = data.as_ptr().add(25).read_volatile();
+            let formatted_lba_size_field = data[26];
+            let has_metadata = (formatted_lba_size_field >> 4) & 1 == 1;
+
+            let lba_fmt_list = unsafe {
+                &*slice_from_raw_parts(
+                    data.as_ptr().add(128) as *const LBAFormatDataStructure,
+                    number_of_lba_formats as usize,
+                )
+            };
+
+            let lba_size_idx = (formatted_lba_size_field & 0b1111) as usize;
+
+            let lba_fmt = lba_fmt_list[lba_size_idx];
+
+            NamespaceDataStructure {
+                namespace_size: raw[0],
+                namespcae_capacity: raw[1],
+                namespace_nused: raw[2],
+                lba_size: 2u32.pow(lba_fmt.lba_data_size as u32),
+                metadata_size: if has_metadata {
+                    data[27] as _
+                } else {
+                    lba_fmt.metadata_size as _
+                },
+            }
+        }
+    }
+
+    fn command_set_mut(&mut self) -> &mut CommandSet {
+        &mut self.command_set
+    }
+}
+
 pub struct IdentifyActiveNamespaceList {
     command_set: CommandSet,
 }
@@ -105,60 +164,6 @@ impl Identify for IdentifyActiveNamespaceList {
     }
 }
 
-pub struct IdentifyNamespaceDataStructure {
-    command_set: CommandSet,
-}
-
-impl IdentifyNamespaceDataStructure {
-    pub fn new(nsid: u32) -> Self {
-        let mut command_set = CommandSet {
-            nsid,
-            ..Default::default()
-        };
-        Self { command_set }
-    }
-}
-
-impl Identify for IdentifyNamespaceDataStructure {
-    const CNS: u32 = 0x0;
-
-    type Output = NamespaceDataStructure;
-
-    fn parse(&self, data: &[u8]) -> Self::Output {
-        let raw = unsafe { &*slice_from_raw_parts(data.as_ptr() as *const u32, data.len() / 4) };
-        let number_of_lba_formats = data[25];
-        let formatted_lba_size_field = data[26];
-        let has_metadata = (formatted_lba_size_field >> 4) & 1 == 1;
-
-        let lba_fmt_list = unsafe {
-            &*slice_from_raw_parts(
-                data.as_ptr().add(128) as *const LBAFormatDataStructure,
-                number_of_lba_formats as usize,
-            )
-        };
-
-        let lba_size_idx = (formatted_lba_size_field & 0b1111) as usize;
-
-        let lba_fmt = lba_fmt_list[lba_size_idx];
-
-        NamespaceDataStructure {
-            namespace_size: raw[0],
-            namespcae_capacity: raw[1],
-            namespace_nused: raw[2],
-            lba_size: 2u32.pow(lba_fmt.lba_data_size as u32),
-            metadata_size: if has_metadata {
-                data[27] as _
-            } else {
-                lba_fmt.metadata_size as _
-            },
-        }
-    }
-
-    fn command_set_mut(&mut self) -> &mut CommandSet {
-        &mut self.command_set
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct NamespaceDataStructure {
     pub namespace_size: u32,
@@ -180,4 +185,71 @@ impl LBAFormatDataStructure {
     fn relative_performance(&self) -> bool {
         self.other & 1 > 0
     }
+}
+
+pub struct IdentifyController {
+    command_set: CommandSet,
+}
+
+impl IdentifyController {
+    pub fn new() -> Self {
+        let mut command_set = CommandSet::default();
+        Self { command_set }
+    }
+}
+
+impl Identify for IdentifyController {
+    const CNS: u32 = 0x01;
+
+    type Output = ControllerInfo;
+
+    fn parse(&self, data: &[u8]) -> Self::Output {
+        let raw = unsafe {
+            let ptr = data.as_ptr();
+            asm!("dc ivac, {}; isb", in(reg) ptr);
+
+            (ptr as *const ControllerData).read_volatile()
+        };
+
+        ControllerInfo {
+            vendor_id: raw.vendor_id,
+            product_id: raw.product_id,
+            sqes_max: raw.sqes >> 4,
+            sqes_min: raw.sqes & 0b1111,
+            cqes_max: raw.cqes >> 4,
+            cqes_min: raw.cqes & 0b1111,
+            max_cmd: raw.max_cmd,
+            number_of_namespaces: raw.number_of_namespaces,
+        }
+    }
+
+    fn command_set_mut(&mut self) -> &mut CommandSet {
+        &mut self.command_set
+    }
+}
+
+#[repr(C)]
+pub struct ControllerData {
+    pub vendor_id: u16,
+    pub product_id: u16,
+    pub serial_number: [u8; 20],
+    pub model_number: [u8; 40],
+    pub firmware_revision: [u8; 8],
+    pub rsv: [u8; 512 - 8 - 40 - 20 - 2 - 2],
+    pub sqes: u8,
+    pub cqes: u8,
+    pub max_cmd: u16,
+    pub number_of_namespaces: u32,
+}
+
+#[derive(Debug)]
+pub struct ControllerInfo {
+    pub vendor_id: u16,
+    pub product_id: u16,
+    pub sqes_max: u8,
+    pub sqes_min: u8,
+    pub cqes_max: u8,
+    pub cqes_min: u8,
+    pub max_cmd: u16,
+    pub number_of_namespaces: u32,
 }

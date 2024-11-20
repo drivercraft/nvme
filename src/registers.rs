@@ -2,7 +2,7 @@ use core::hint::spin_loop;
 
 use log::debug;
 use tock_registers::{
-    interfaces::{Readable, Writeable},
+    interfaces::{ReadWriteable, Readable, Writeable},
     register_bitfields, register_structs,
     registers::{ReadOnly, ReadWrite, WriteOnly},
 };
@@ -167,7 +167,14 @@ impl NvmeReg {
         );
     }
 
-    pub fn enable_ctrl(&self) {
+    pub fn reset(&self) {
+        self.controller_configuration.write(CC::Enable::CLEAR);
+        debug!("Waiting for reset...");
+        spin_for_true(|| !self.controller_status.is_set(CSTS::RDY));
+        debug!("Reset complete!")
+    }
+
+    pub fn setup_controller_settings(&self) {
         self.controller_configuration.write(
             CC::Enable::SET
                 + CC::IOCommandSetSelected::NVMCommandSet
@@ -178,6 +185,14 @@ impl NvmeReg {
         );
         debug!("Waiting for ready...");
         spin_for_true(|| self.controller_status.is_set(CSTS::RDY));
+        debug!("Ready!");
+    }
+
+    pub fn set_controller_sq_cq_size(&self, sq_size: u32, cq_size: u32) {
+        self.controller_configuration.modify(
+            CC::IOSubmissionQueueEntrySize.val(sq_size)
+                + CC::IOCompletionQueueEntrySize.val(cq_size),
+        );
     }
 
     // write submission queue doorbell to notify nvme device
