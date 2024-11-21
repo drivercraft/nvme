@@ -7,6 +7,7 @@ nvme driver 1.4
 install qemu.
 
 ```shell
+cargo install ostool
 ./img.sh
 cargo test --test tests --  --show-output
 ```
