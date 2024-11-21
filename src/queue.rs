@@ -1,17 +1,16 @@
 use core::{
-    arch::asm,
     hint::spin_loop,
     mem,
     ptr::NonNull,
     sync::atomic::{AtomicU32, Ordering},
 };
 
-use log::{debug, trace};
+use dma_api::{DVec, Direction};
+use log::debug;
 use tock_registers::register_bitfields;
 
 use crate::{
     command::{self, Feature},
-    dma::DMAVec,
     err::*,
     registers::NvmeReg,
     OS,
@@ -216,17 +215,23 @@ impl CompletionStatus {
     }
 }
 
-pub struct NvmeQueue<O: OS> {
+pub struct NvmeQueue {
     pub qid: u32,
-    pub sq: SubmitQueue<O>,
-    pub cq: CompleteQueue<O>,
+    pub sq: SubmitQueue,
+    pub cq: CompleteQueue,
     pub reg: NonNull<NvmeReg>,
 }
 
-impl<O: OS> NvmeQueue<O> {
-    pub fn new(qid: u32, reg: NonNull<NvmeReg>, sq: usize, cq: usize) -> Result<Self> {
-        let submit_queue = SubmitQueue::new(sq)?;
-        let complete_queue = CompleteQueue::new(cq)?;
+impl NvmeQueue {
+    pub fn new(
+        qid: u32,
+        reg: NonNull<NvmeReg>,
+        page_size: usize,
+        sq: usize,
+        cq: usize,
+    ) -> Result<Self> {
+        let submit_queue = SubmitQueue::new(sq, page_size)?;
+        let complete_queue = CompleteQueue::new(cq, page_size)?;
 
         Ok(NvmeQueue {
             sq: submit_queue,
@@ -264,24 +269,21 @@ impl<O: OS> NvmeQueue<O> {
     }
 }
 
-pub struct SubmitQueue<O: OS> {
-    queue: DMAVec<NvmeSubmission, O>,
+pub struct SubmitQueue {
+    queue: DVec<NvmeSubmission>,
     tail: u32,
 }
 
-impl<O: OS> SubmitQueue<O> {
-    fn new(queue_size: usize) -> Result<Self> {
-        let queue = DMAVec::zeros(queue_size)?;
+impl SubmitQueue {
+    fn new(queue_size: usize, page_size: usize) -> Result<Self> {
+        let queue =
+            DVec::zeros(queue_size, page_size, Direction::ToDevice).ok_or(Error::NoMemory)?;
         Ok(SubmitQueue { queue, tail: 0 })
     }
 
     // returns the submission queue tail
     pub fn submit(&mut self, data: impl Submission) -> u32 {
-        let item = &mut self.queue[self.tail as usize] as *mut NvmeSubmission;
-        unsafe {
-            item.write_volatile(data.to_submission());
-            asm!("dc cvac, {}; isb", in(reg) item);
-        }
+        self.queue.set(self.tail as usize, data.to_submission());
 
         self.tail += 1;
         if self.tail >= self.len() as u32 {
@@ -299,15 +301,16 @@ impl<O: OS> SubmitQueue<O> {
     }
 }
 
-pub struct CompleteQueue<O: OS> {
-    queue: DMAVec<NvmeCompletion, O>,
+pub struct CompleteQueue {
+    queue: DVec<NvmeCompletion>,
     head: u32,
     phase: bool,
 }
 
-impl<O: OS> CompleteQueue<O> {
-    fn new(queue_size: usize) -> Result<Self> {
-        let queue = DMAVec::zeros(queue_size)?;
+impl CompleteQueue {
+    fn new(queue_size: usize, page_size: usize) -> Result<Self> {
+        let queue =
+            DVec::zeros(queue_size, page_size, Direction::FromDevice).ok_or(Error::NoMemory)?;
         Ok(CompleteQueue {
             queue,
             head: 0,
@@ -317,11 +320,7 @@ impl<O: OS> CompleteQueue<O> {
 
     // check if there is completed command in completion queue
     fn complete(&self) -> Option<NvmeCompletion> {
-        let cqe = unsafe {
-            let cqe_ptr = self.queue.as_ptr().add(self.head as _);
-            asm!("dc ivac, {}; isb", in(reg) cqe_ptr);
-            cqe_ptr.read_volatile()
-        };
+        let cqe = self.queue.get(self.head as _)?;
 
         let complete = cqe.status.phase() != self.phase;
 

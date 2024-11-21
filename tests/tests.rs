@@ -67,37 +67,8 @@ fn test_nvme() {
     println!("test passed!");
 }
 
-pub struct OSImpl;
 
-impl OS for OSImpl {
-    fn dma_alloc(layout: Layout) -> Option<DMAMem> {
-        unsafe {
-            dma::alloc_coherent(layout).map(|m| DMAMem {
-                virt: m.cpu_addr,
-                phys: m.bus_addr.as_u64(),
-                layout,
-            })
-        }
-    }
-
-    fn dma_dealloc(dma: DMAMem) {
-        unsafe {
-            dma::dealloc_coherent(
-                dma::DMAMem {
-                    cpu_addr: dma.virt,
-                    bus_addr: dma.phys.into(),
-                },
-                dma.layout,
-            );
-        }
-    }
-
-    fn page_size() -> usize {
-        unsafe { page_size() }
-    }
-}
-
-fn get_nvme() -> Nvme<OSImpl> {
+fn get_nvme() -> Nvme {
     let fdt = get_device_tree().unwrap();
     let pcie = fdt
         .find_compatible(&["pci-host-ecam-generic"])
@@ -191,7 +162,7 @@ fn get_nvme() -> Nvme<OSImpl> {
                     addr = Some(iomap(bar_addr.into(), bar_size));
                 }
 
-                let nvme = Nvme::<OSImpl>::new(addr.unwrap())
+                let nvme = Nvme::new(addr.unwrap(), unsafe { page_size() })
                     .inspect_err(|e| error!("{:?}", e))
                     .unwrap();
                 return nvme;

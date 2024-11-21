@@ -1,9 +1,6 @@
 #![allow(unused)]
 
-use core::{
-    arch::asm,
-    ptr::{slice_from_raw_parts, slice_from_raw_parts_mut},
-};
+use core::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
 
 use alloc::vec::Vec;
 use log::debug;
@@ -94,7 +91,6 @@ impl Identify for IdentifyNamespaceDataStructure {
     fn parse(&self, data: &[u8]) -> Self::Output {
         let raw = unsafe { &*slice_from_raw_parts(data.as_ptr() as *const u32, data.len() / 4) };
         unsafe {
-            asm!("dc ivac, {}; isb", in(reg) raw.as_ptr());
             if raw[0] == 0 {
                 return None;
             }
@@ -213,8 +209,6 @@ impl Identify for IdentifyController {
     fn parse(&self, data: &[u8]) -> Self::Output {
         let raw = unsafe {
             let ptr = data.as_ptr();
-            asm!("dc ivac, {}; isb", in(reg) ptr);
-
             (ptr as *const ControllerData).read_volatile()
         };
 

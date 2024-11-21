@@ -1,6 +1,7 @@
 use core::ptr::NonNull;
 
 use alloc::vec::Vec;
+use dma_api::{DBox, DVec, Direction};
 use log::{debug, info};
 
 use crate::{
@@ -8,30 +9,30 @@ use crate::{
         self, Feature, Identify, IdentifyActiveNamespaceList, IdentifyController,
         IdentifyNamespaceDataStructure,
     },
-    dma::DMAVec,
     err::*,
     queue::{CommandSet, NvmeQueue},
     registers::NvmeReg,
-    OS,
 };
 
-pub struct Nvme<O: OS> {
+pub struct Nvme {
     bar: NonNull<NvmeReg>,
-    admin_queue: NvmeQueue<O>,
-    io_queues: NvmeQueue<O>,
+    admin_queue: NvmeQueue,
+    io_queues: NvmeQueue,
+    page_size: usize,
     num_ns: usize,
 }
 
-impl<O: OS> Nvme<O> {
-    pub fn new(bar: NonNull<u8>) -> Result<Self> {
-        let admin_queue = NvmeQueue::new(0, bar.cast(), 64, 64)?;
-        let io_queues = NvmeQueue::new(1, bar.cast(), 6, 4)?;
+impl Nvme {
+    pub fn new(bar: NonNull<u8>, page_size: usize) -> Result<Self> {
+        let admin_queue = NvmeQueue::new(0, bar.cast(), page_size, 64, 64)?;
+        let io_queues = NvmeQueue::new(1, bar.cast(), page_size, 6, 4)?;
 
         let mut s = Self {
             bar: bar.cast(),
             admin_queue,
             io_queues,
             num_ns: 0,
+            page_size,
         };
 
         let version = s.version();
@@ -169,13 +170,16 @@ impl<O: OS> Nvme<O> {
         cmd.cdw0 = CommandSet::cdw0_from_opcode(command::Opcode::IDENTIFY);
         cmd.cdw10 = T::CNS;
 
-        let data = DMAVec::<u8, O>::zeros(0x1000)?;
-        cmd.prp1 = data.bus_addr();
+        let buff = DVec::zeros(0x1000, 0x1000, Direction::FromDevice).ok_or(Error::NoMemory)?;
+        cmd.prp1 = buff.bus_addr();
 
         self.admin_queue.command_sync(*cmd)?;
 
-        let res = want.parse(&data);
+        let mut data = [0; 0x1000];
 
+        data.copy_from_slice(&buff);
+
+        let res = want.parse(&data);
         Ok(res)
     }
 
@@ -190,7 +194,8 @@ impl<O: OS> Nvme<O> {
             "buffer size must be multiple of lba size"
         );
 
-        let mut data = DMAVec::<u8, O>::zeros(buff.len())?;
+        let mut data = DVec::<u8>::zeros(buff.len(), self.page_size, Direction::ToDevice)
+            .ok_or(Error::NoMemory)?;
 
         data.copy_from_slice(buff);
 
@@ -214,7 +219,8 @@ impl<O: OS> Nvme<O> {
             "buffer size must be multiple of lba size"
         );
 
-        let data = DMAVec::<u8, O>::zeros(buff.len())?;
+        let data = DVec::<u8>::zeros(buff.len(), self.page_size, Direction::FromDevice)
+            .ok_or(Error::NoMemory)?;
 
         let blk_num = buff.len() / ns.lba_size;
 
