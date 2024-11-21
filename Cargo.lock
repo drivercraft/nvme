@@ -110,9 +110,9 @@ dependencies = [
 
 [[package]]
 name = "bytemuck"
-version = "1.19.0"
+version = "1.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8334215b81e418a0a7bdb8ef0849474f40bb10c8b71f1c4ed315cff49f32494d"
+checksum = "8b37c88a63ffd85d15b406896cc343916d7cf57838a847b3a6f2ca5d39a5695a"
 
 [[package]]
 name = "chrono"
@@ -122,6 +122,12 @@ checksum = "a21f936df1771bf62b77f047b726c4625ff2e8aa607c01ec06e5a05bd8463401"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "dma-api"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43b4ebab7363a50770982e330b79e0bbd1e7002df04ad21985cd74853506eb94"
 
 [[package]]
 name = "driver-interface"
@@ -279,6 +285,7 @@ version = "0.2.0"
 dependencies = [
  "bare-test",
  "byte-unit",
+ "dma-api",
  "log",
  "pcie",
  "sparreal-macros",
@@ -429,15 +436,16 @@ dependencies = [
 
 [[package]]
 name = "sparreal-rt"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1ba7b618ee151dbe2997c9c6db639633c08e07bf6fa231651bfc525f15ce4fb"
+checksum = "78420d90c6ab61c74e04328d7bdfb9ea6e4cbb5a7f87ed010c27724ffcbf5a08"
 dependencies = [
  "aarch64-cpu",
  "arm-gic-driver",
  "arm-pl011-rs",
  "arm_pl031",
  "bitflags",
+ "dma-api",
  "driver-interface",
  "embedded-io",
  "fdt-parser",
@@ -488,9 +496,9 @@ checksum = "2b9e2fdb3a1e862c0661768b7ed25390811df1947a8acbfbefe09b47078d93c4"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.13"
+version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e91b56cd4cadaeb79bbf1a5645f6b4f8dc5bde8834ad5894a8db35fda9efa1fe"
+checksum = "adb9e6ca4f869e1180728b7950e35922a7fc6397f7b641499e8f3ef06e50dc83"
 
 [[package]]
 name = "utf8-width"

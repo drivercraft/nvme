@@ -9,6 +9,7 @@ description = "nvme driver"
 [dependencies]
 tock-registers = "0.9.0"
 log = "0.4"
+dma-api = "0.1"
 
 [dev-dependencies]
 bare-test = "0.1"
