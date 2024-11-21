@@ -10,11 +10,8 @@ mod registers;
 
 use core::{alloc::Layout, ptr::NonNull};
 
+pub use dma_api::{set_impl, Impl};
 pub use nvme::Nvme;
-
-pub trait OS {
-    fn page_size() -> usize;
-}
 
 #[derive(Clone, Copy)]
 pub struct DMAMem {

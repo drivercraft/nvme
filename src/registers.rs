@@ -2,7 +2,7 @@ use core::hint::spin_loop;
 
 use log::debug;
 use tock_registers::{
-    interfaces::{ReadWriteable, Readable, Writeable},
+    interfaces::{Readable, Writeable},
     register_bitfields, register_structs,
     registers::{ReadOnly, ReadWrite, WriteOnly},
 };
@@ -187,7 +187,6 @@ impl NvmeReg {
         spin_for_true(|| self.controller_status.is_set(CSTS::RDY));
         debug!("Ready!");
     }
-
 
     // write submission queue doorbell to notify nvme device
     pub fn write_sq_y_tail_doolbell(&self, y: usize, tail: u32) {

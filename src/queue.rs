@@ -13,7 +13,6 @@ use crate::{
     command::{self, Feature},
     err::*,
     registers::NvmeReg,
-    OS,
 };
 
 static ID_FACTORY: AtomicU32 = AtomicU32::new(0);

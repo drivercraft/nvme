@@ -1,7 +1,7 @@
 use core::ptr::NonNull;
 
 use alloc::vec::Vec;
-use dma_api::{DBox, DVec, Direction};
+use dma_api::{DVec, Direction};
 use log::{debug, info};
 
 use crate::{
