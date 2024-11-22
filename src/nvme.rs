@@ -22,6 +22,12 @@ pub struct Nvme {
     num_ns: usize,
 }
 
+pub struct Config{
+    pub page_size: usize,
+    pub io_queue_pair_count: usize,
+}
+
+
 impl Nvme {
     pub fn new(bar: NonNull<u8>, page_size: usize) -> Result<Self> {
         let admin_queue = NvmeQueue::new(0, bar.cast(), page_size, 64, 64)?;
