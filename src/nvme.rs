@@ -1,7 +1,7 @@
 use core::ptr::NonNull;
 
 use alloc::vec::Vec;
-use dma_api::{DVec, Direction};
+use dma_api::{DSlice, DSliceMut, DVec, Direction};
 use log::{debug, info};
 
 use crate::{
@@ -220,14 +220,11 @@ impl Nvme {
             "buffer size must be multiple of lba size"
         );
 
-        let mut data = DVec::<u8>::zeros(buff.len(), self.page_size, Direction::ToDevice)
-            .ok_or(Error::NoMemory)?;
-
-        data.copy_from_slice(buff);
+        let buff = DSlice::from(buff);
 
         let blk_num = buff.len() / ns.lba_size;
 
-        let cmd = CommandSet::nvm_cmd_write(ns.id, data.bus_addr(), block_start, blk_num as _);
+        let cmd = CommandSet::nvm_cmd_write(ns.id, buff.bus_addr(), block_start, blk_num as _);
 
         self.io_queues[0].command_sync(cmd)?;
 
@@ -245,17 +242,15 @@ impl Nvme {
             "buffer size must be multiple of lba size"
         );
 
-        let data = DVec::<u8>::zeros(buff.len(), self.page_size, Direction::FromDevice)
-            .ok_or(Error::NoMemory)?;
+        let buff = DSliceMut::from(buff, Direction::FromDevice);
 
         let blk_num = buff.len() / ns.lba_size;
 
-        let cmd = CommandSet::nvm_cmd_read(ns.id, data.bus_addr(), block_start, blk_num as _);
+        let cmd = CommandSet::nvm_cmd_read(ns.id, buff.bus_addr(), block_start, blk_num as _);
 
         self.io_queues[0].command_sync(cmd)?;
 
-        buff.copy_from_slice(&data);
-
+        buff.preper_read_all();
         Ok(())
     }
 

@@ -44,7 +44,7 @@ fn test_nvme() {
 
     let mut buff1 = alloc::vec![0u8; ns.lba_size];
 
-    let want_str = "hello world!";
+    let want_str = "123 hello world!";
 
     let want = CString::new(want_str).unwrap();
 

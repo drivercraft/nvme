@@ -125,9 +125,9 @@ dependencies = [
 
 [[package]]
 name = "dma-api"
-version = "0.1.6"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c459634addcd830b56df87a7b0327cc08f009d1643616bbbb5bc2164d68e1cea"
+checksum = "472c796ba63830db97f3b98ec67b9148b6e74675df2170681ad73cf6574c4414"
 
 [[package]]
 name = "driver-interface"
