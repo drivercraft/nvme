@@ -67,7 +67,6 @@ fn test_nvme() {
     println!("test passed!");
 }
 
-
 fn get_nvme() -> Nvme {
     let fdt = get_device_tree().unwrap();
     let pcie = fdt
@@ -102,6 +101,8 @@ fn get_nvme() -> Nvme {
     let base_vaddr = pcie_regs[0];
 
     info!("Init PCIE @{:?}", base_vaddr);
+
+    let page_size = unsafe { page_size() };
 
     let root = pcie::RootGeneric::new(base_vaddr.as_ptr() as usize);
 
@@ -162,9 +163,15 @@ fn get_nvme() -> Nvme {
                     addr = Some(iomap(bar_addr.into(), bar_size));
                 }
 
-                let nvme = Nvme::new(addr.unwrap(), unsafe { page_size() })
-                    .inspect_err(|e| error!("{:?}", e))
-                    .unwrap();
+                let nvme = Nvme::new(
+                    addr.unwrap(),
+                    Config {
+                        page_size,
+                        io_queue_pair_count: 1,
+                    },
+                )
+                .inspect_err(|e| error!("{:?}", e))
+                .unwrap();
                 return nvme;
             }
         }

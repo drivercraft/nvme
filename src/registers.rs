@@ -174,14 +174,26 @@ impl NvmeReg {
         debug!("Reset complete!")
     }
 
-    pub fn setup_controller_settings(&self) {
+    pub fn setup_cc(&self, sqes: u32, cqes: u32) {
         self.controller_configuration.write(
             CC::Enable::SET
                 + CC::IOCommandSetSelected::NVMCommandSet
                 + CC::ArbitrationMechanismSelected::RoundRobin
                 + CC::ShutdownNotification::None
-                + CC::IOSubmissionQueueEntrySize.val(6)
-                + CC::IOCompletionQueueEntrySize.val(4),
+                + CC::IOSubmissionQueueEntrySize.val(sqes)
+                + CC::IOCompletionQueueEntrySize.val(cqes),
+        );
+        debug!("Waiting for ready...");
+        spin_for_true(|| self.controller_status.is_set(CSTS::RDY));
+        debug!("Ready!");
+    }
+
+    pub fn ready_for_read_controller_info(&self) {
+        self.controller_configuration.write(
+            CC::Enable::SET
+                + CC::IOCommandSetSelected::AdminCommandSetOnly
+                + CC::ArbitrationMechanismSelected::RoundRobin
+                + CC::ShutdownNotification::None,
         );
         debug!("Waiting for ready...");
         spin_for_true(|| self.controller_status.is_set(CSTS::RDY));
