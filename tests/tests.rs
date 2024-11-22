@@ -14,7 +14,7 @@ fn main() {
 
 use core::{alloc::Layout, ffi::CStr};
 
-use alloc::ffi::CString;
+use alloc::{ffi::CString, format};
 use bare_test::{
     driver::device_tree::get_device_tree,
     fdt::PciSpace,
@@ -42,27 +42,30 @@ fn test_nvme() {
 
     let ns = namespace_list[0];
 
-    let mut buff1 = alloc::vec![0u8; ns.lba_size];
+    for i in 0..128 {
+        let want_str = format!("hello world! block {}", i);
 
-    let want_str = "123 hello world!";
+        let want = CString::new(want_str.as_str()).unwrap();
 
-    let want = CString::new(want_str).unwrap();
+        let want_bytes = want.to_bytes();
 
-    let want_bytes = want.to_bytes();
+        // buff 大小需与块大小一致
+        let mut write_buff = alloc::vec![0u8; ns.lba_size];
 
-    buff1[..want_bytes.len()].copy_from_slice(want_bytes);
+        write_buff[0..want_bytes.len()].copy_from_slice(want_bytes);
 
-    nvme.block_write_sync(&ns, 0, buff1.as_mut_slice()).unwrap();
+        nvme.block_write_sync(&ns, i, &write_buff).unwrap();
 
-    let mut buff = alloc::vec![0u8; ns.lba_size];
+        let mut buff = alloc::vec![0u8; ns.lba_size];
 
-    nvme.block_read_sync(&ns, 0, buff.as_mut_slice()).unwrap();
+        nvme.block_read_sync(&ns, i, &mut buff).unwrap();
 
-    let read_result = unsafe { CStr::from_ptr(buff.as_ptr() as _) }.to_str();
+        let read_result = unsafe { CStr::from_ptr(buff.as_ptr() as _) }.to_str();
 
-    println!("read result: {:?}", read_result);
+        println!("read result: {:?}", read_result.unwrap());
 
-    assert_eq!(Ok(want_str), read_result);
+        assert_eq!(Ok(want_str.as_str()), read_result);
+    }
 
     println!("test passed!");
 }

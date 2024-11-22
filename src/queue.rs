@@ -336,7 +336,7 @@ impl CompleteQueue {
                 let next_head = self.head + 1;
                 if next_head >= self.queue.len() as u32 {
                     self.head = 0;
-                    self.phase ^= self.phase;
+                    self.phase = !self.phase;
                 } else {
                     self.head = next_head;
                 }

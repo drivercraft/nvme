@@ -18,7 +18,6 @@ pub struct Nvme {
     bar: NonNull<NvmeReg>,
     admin_queue: NvmeQueue,
     io_queues: Vec<NvmeQueue>,
-    page_size: usize,
     num_ns: usize,
     sqes: u32,
     cqes: u32,
@@ -41,7 +40,6 @@ impl Nvme {
             admin_queue,
             io_queues: Vec::new(),
             num_ns: 0,
-            page_size: config.page_size,
             sqes: 6,
             cqes: 4,
         };
@@ -158,8 +156,8 @@ impl Nvme {
                 id,
                 self.bar,
                 config.page_size,
-                self.sqes as _,
-                self.cqes as _,
+                2usize.pow(self.sqes as _),
+                2usize.pow(self.cqes as _),
             )?;
 
             let data = CommandSet::create_io_completion_queue(
