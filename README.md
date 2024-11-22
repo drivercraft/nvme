@@ -12,9 +12,14 @@ cargo install ostool
 
 # run test with qemu
 cargo test --test tests --  --show-output
+```
 
-# run test with real hardware that has uboot
-# Connect to the board with serial, insert the Ethernet cable into the board 
-# so that the host and the board are on the same network segment.
+## hardware test
+
+1. 主机连接开发板串口
+2. 开发板插入网线，并且主机与开发板应处于同一网段
+3. 准备开发板设备树文件 `*.dtb`
+
+```shell
 cargo test --test tests --  --show-output --uboot
 ```
