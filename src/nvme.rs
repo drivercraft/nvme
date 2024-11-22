@@ -199,11 +199,7 @@ impl Nvme {
 
         self.admin_queue.command_sync(*cmd)?;
 
-        let mut data = [0; 0x1000];
-
-        data.copy_from_slice(&buff);
-
-        let res = want.parse(&data);
+        let res = want.parse(&buff);
         Ok(res)
     }
 
