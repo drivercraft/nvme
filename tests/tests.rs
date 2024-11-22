@@ -40,6 +40,15 @@ fn test_nvme() {
         println!("namespace: {:?}, space: {:#}", ns, space);
     }
 
+    for _i in 0..128 {
+        let _ = nvme
+            .namespace_list()
+            .inspect_err(|e| error!("{:?}", e))
+            .unwrap();
+    }
+
+    println!("admin queue test ok");
+
     let ns = namespace_list[0];
 
     for i in 0..128 {

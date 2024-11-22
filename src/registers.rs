@@ -162,8 +162,8 @@ impl NvmeReg {
         completion_size: usize,
     ) {
         self.admin_queue_attributes.write(
-            AQA::AdminSubmissionQueueSize.val(submission_size as _)
-                + AQA::AdminCompletionQueueSize.val(completion_size as _),
+            AQA::AdminSubmissionQueueSize.val(submission_size as u32 - 1)
+                + AQA::AdminCompletionQueueSize.val(completion_size as u32 - 1),
         );
     }
 
