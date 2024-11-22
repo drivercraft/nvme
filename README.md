@@ -21,5 +21,6 @@ cargo test --test tests --  --show-output
 3. 准备开发板设备树文件 `*.dtb`
 
 ```shell
+cargo install ostool
 cargo test --test tests --  --show-output --uboot
 ```
