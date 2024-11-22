@@ -1,6 +1,6 @@
 [target.'cfg(all(target_os = "none"))']
-# runner = "ostool cargo-test"
-runner = "ostool cargo-test --uboot"
+runner = "ostool cargo-test"
+# runner = "ostool cargo-test --uboot"
 
 [build]
 target = "aarch64-unknown-none"
