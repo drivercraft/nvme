@@ -11,7 +11,7 @@ mod registers;
 use core::{alloc::Layout, ptr::NonNull};
 
 pub use dma_api::{set_impl, Impl};
-pub use nvme::{Config, Nvme};
+pub use nvme::{Config, Namespace, Nvme};
 
 #[derive(Clone, Copy)]
 pub struct DMAMem {
