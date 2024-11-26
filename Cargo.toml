@@ -4,7 +4,10 @@ version = "0.2.0"
 edition = "2021"
 authors = ["周睿 <zrufo747@outlook.com>"]
 description = "nvme driver"
-
+repository = "https://gitee.com/zr233/nvme-driver"
+license = "MIT"
+keywords = ["os", "nvme", "block", "driver"]
+categories = ["embedded", "no-std"]
 
 [dependencies]
 tock-registers = "0.9.0"
@@ -13,7 +16,7 @@ dma-api = "0.1"
 
 [dev-dependencies]
 bare-test = "0.1"
-pcie = { git = "https://gitee.com/zr233/pcie" , tag = "v0.1.0"}
+pcie = "0.2"
 byte-unit = { version = "5.1.6", default-features = false, features = ["byte"] }
 
 [build-dependencies]

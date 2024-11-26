@@ -14,7 +14,7 @@ fn main() {
 
 use core::{alloc::Layout, ffi::CStr};
 
-use alloc::{ffi::CString, format};
+use alloc::{ffi::CString, format, vec::Vec};
 use bare_test::{
     driver::device_tree::get_device_tree,
     fdt::PciSpace,
@@ -25,7 +25,9 @@ use bare_test::{
 use byte_unit::Byte;
 use log::*;
 use nvme_driver::*;
-use pcie::{preludes::*, PciDevice};
+use pcie::{
+    BarAllocator, CommandRegister, DeviceType, Header, RootComplexGeneric, SimpleBarAllocator,
+};
 
 #[test_case]
 fn test_nvme() {
@@ -99,15 +101,21 @@ fn get_nvme() -> Nvme {
         pcie_regs.push(iomap((reg.address as usize).into(), reg.size.unwrap()));
     }
 
-    let mut m32_range = 0..0;
-    let mut m64_range = 0..0;
+    let mut bar_alloc = SimpleBarAllocator::default();
 
     for range in pcie.ranges().unwrap() {
+        info!("pcie range: {:?}", range);
+
         match range.space {
-            PciSpace::Memory32 => m32_range = range.cpu_address..range.size,
-            PciSpace::Memory64 => m64_range = range.cpu_address..range.size,
+            PciSpace::Memory32 => bar_alloc.set_mem32(range.cpu_address as _, range.size as _),
+            PciSpace::Memory64 => bar_alloc.set_mem64(range.cpu_address, range.size),
             _ => {}
         }
+        // match range.space {
+        //     PciSpace::Memory32 => bar_alloc.set_mem64((range.cpu_address + 0x1000) as _, range.size as _),
+        //     // PciSpace::Memory64 => bar_alloc.set_mem64(range.cpu_address, range.size),
+        //     _ => {}
+        // }
     }
 
     let base_vaddr = pcie_regs[0];
@@ -116,67 +124,44 @@ fn get_nvme() -> Nvme {
 
     let page_size = unsafe { page_size() };
 
-    let root = pcie::RootGeneric::new(base_vaddr.as_ptr() as usize);
+    let mut root = RootComplexGeneric::new(base_vaddr);
 
-    for device in root.enumerate() {
+    let headers = root.enumerate(None, Some(bar_alloc)).collect::<Vec<_>>();
+    // let headers = root.enumerate_no_modify(None).collect::<Vec<_>>();
+
+    for device in headers {
         debug!("PCI {}", device);
 
-        if let PciDevice::Endpoint(mut ep) = device {
-            println!("{:?}", ep.id());
-            ep.update_command(|cmd| {
+        if let Header::Endpoint(mut ep) = device {
+            ep.update_command(&mut root, |cmd| {
                 cmd | CommandRegister::IO_ENABLE
                     | CommandRegister::MEMORY_ENABLE
                     | CommandRegister::BUS_MASTER_ENABLE
             });
 
             if ep.device_type() == DeviceType::NvmeController {
-                let mut addr = None;
-                let slot = 0;
-                let bar = ep.bar(slot).unwrap();
-
-                println!("bar{}: {:?}", slot, bar);
-
                 let bar_addr;
                 let bar_size;
-
-                match bar {
-                    Bar::Memory32 {
-                        address,
-                        size,
-                        prefetchable,
-                    } => {
-                        bar_addr = if address == 0 {
-                            let new_addr = m32_range.start as usize;
-                            unsafe { ep.write_bar(slot, new_addr) };
-                            new_addr
-                        } else {
-                            address as usize
-                        };
-                        bar_size = size as usize;
+                match ep.bar {
+                    pcie::BarVec::Memory32(bar_vec_t) => {
+                        let bar0 = bar_vec_t[0].as_ref().unwrap();
+                        bar_addr = bar0.address as usize;
+                        bar_size = bar0.size as usize;
                     }
-                    Bar::Memory64 {
-                        address,
-                        size,
-                        prefetchable,
-                    } => {
-                        bar_addr = if address == 0 {
-                            let new_addr = m64_range.start as usize;
-                            unsafe { ep.write_bar(slot, new_addr) };
-                            new_addr
-                        } else {
-                            address as usize
-                        };
-                        bar_size = size as usize;
+                    pcie::BarVec::Memory64(bar_vec_t) => {
+                        let bar0 = bar_vec_t[0].as_ref().unwrap();
+                        bar_addr = bar0.address as usize;
+                        bar_size = bar0.size as usize;
                     }
-                    Bar::Io { port } => todo!(),
+                    pcie::BarVec::Io(bar_vec_t) => todo!(),
                 };
 
-                if slot == 0 {
-                    addr = Some(iomap(bar_addr.into(), bar_size));
-                }
+                println!("bar0: {:#x}", bar_addr);
+
+                let addr = iomap(bar_addr.into(), bar_size);
 
                 let nvme = Nvme::new(
-                    addr.unwrap(),
+                    addr,
                     Config {
                         page_size,
                         io_queue_pair_count: 1,

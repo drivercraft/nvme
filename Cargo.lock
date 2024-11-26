@@ -328,7 +328,8 @@ checksum = "efcd36303871fb977a47dabc9af736c75c492bb32a92fa26262b2741531e97ce"
 [[package]]
 name = "pci_types"
 version = "0.10.0"
-source = "git+https://github.com/ZR233/pci_types.git?branch=set_bus#bd81923619d9a8aecbd52efb96266ff9765cc23e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4325c6aa3cca3373503b1527e75756f9fbfe5fd76be4b4c8a143ee47430b8e0"
 dependencies = [
  "bit_field",
  "bitflags",
@@ -336,15 +337,15 @@ dependencies = [
 
 [[package]]
 name = "pcie"
-version = "0.1.0"
-source = "git+https://gitee.com/zr233/pcie?tag=v0.1.0#6a04a2388b8d5afe819d231806f55a429fac0b0b"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3d0a40d3a459003c29ac4219c2a8cdd11fa6c9a64e38fa9a317a20d953dbc22"
 dependencies = [
  "bit_field",
- "embedded-hal",
+ "bitflags",
  "log",
  "pci_types",
- "tock-registers",
- "volatile",
+ "sparreal-macros",
 ]
 
 [[package]]
@@ -505,9 +506,3 @@ name = "utf8-width"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "86bd8d4e895da8537e5315b8254664e6b769c4ff3db18321b297a1e7004392e3"
-
-[[package]]
-name = "volatile"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af8ca9a5d4debca0633e697c88269395493cebf2e10db21ca2dbde37c1356452"
