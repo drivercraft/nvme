@@ -25,9 +25,7 @@ use bare_test::{
 use byte_unit::Byte;
 use log::*;
 use nvme_driver::*;
-use pcie::{
-    BarAllocator, CommandRegister, DeviceType, Header, RootComplexGeneric, SimpleBarAllocator,
-};
+use pcie::{CommandRegister, DeviceType, Header, RootComplexGeneric, SimpleBarAllocator};
 
 #[test_case]
 fn test_nvme() {
@@ -126,14 +124,11 @@ fn get_nvme() -> Nvme {
 
     let mut root = RootComplexGeneric::new(base_vaddr);
 
-    let headers = root.enumerate(None, Some(bar_alloc)).collect::<Vec<_>>();
-    // let headers = root.enumerate_no_modify(None).collect::<Vec<_>>();
+    for elem in root.enumerate(None, Some(bar_alloc)) {
+        debug!("PCI {}", elem);
 
-    for device in headers {
-        debug!("PCI {}", device);
-
-        if let Header::Endpoint(mut ep) = device {
-            ep.update_command(&mut root, |cmd| {
+        if let Header::Endpoint(ep) = elem.header {
+            ep.update_command(elem.root, |cmd| {
                 cmd | CommandRegister::IO_ENABLE
                     | CommandRegister::MEMORY_ENABLE
                     | CommandRegister::BUS_MASTER_ENABLE
@@ -153,7 +148,7 @@ fn get_nvme() -> Nvme {
                         bar_addr = bar0.address as usize;
                         bar_size = bar0.size as usize;
                     }
-                    pcie::BarVec::Io(bar_vec_t) => todo!(),
+                    pcie::BarVec::Io(_bar_vec_t) => todo!(),
                 };
 
                 println!("bar0: {:#x}", bar_addr);
