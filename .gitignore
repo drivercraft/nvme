@@ -4,3 +4,4 @@ example/nvme.img
 example/os.bin
 build
 /.bare-test.toml
+/Cargo.lock
