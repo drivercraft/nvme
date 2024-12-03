@@ -7,12 +7,9 @@
 extern crate alloc;
 extern crate bare_test;
 
-#[bare_test::entry]
-fn main() {
-    test_main();
-}
+bare_test::test_setup!();
 
-use core::{alloc::Layout, ffi::CStr};
+use core::ffi::CStr;
 
 use alloc::{ffi::CString, format, vec::Vec};
 use bare_test::{
