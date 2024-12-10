@@ -1,6 +1,6 @@
 [package]
 name = "nvme-driver"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2021"
 authors = ["周睿 <zrufo747@outlook.com>"]
 description = "nvme driver"
@@ -12,12 +12,16 @@ categories = ["embedded", "no-std"]
 [dependencies]
 tock-registers = "0.9.0"
 log = "0.4"
-dma-api = "0.1"
+dma-api = { version = "0.2", features = ["alloc"] }
 
 [dev-dependencies]
-bare-test = "0.1"
+bare-test = "0.2"
 pcie = "0.2"
 byte-unit = { version = "5.1.6", default-features = false, features = ["byte"] }
 
 [build-dependencies]
 sparreal-macros = "0.0.5"
+
+
+[patch.crates-io]
+sparreal-rt = { path = "D:\\sparreal2\\crates\\sparreal-rt", package = "sparreal-rt" }
