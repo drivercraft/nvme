@@ -194,12 +194,12 @@ impl Nvme {
         cmd.cdw0 = CommandSet::cdw0_from_opcode(command::Opcode::IDENTIFY);
         cmd.cdw10 = T::CNS;
 
-        let buff = DVec::zeros(0x1000, 0x1000, Direction::FromDevice).ok_or(Error::NoMemory)?;
+        let buff = DVec::zeros(u64::MAX, 0x1000, 0x1000, Direction::FromDevice).unwrap();
         cmd.prp1 = buff.bus_addr();
 
         self.admin_queue.command_sync(*cmd)?;
 
-        let res = want.parse(&buff);
+        let res = want.parse(buff.as_ref());
         Ok(res)
     }
 
@@ -210,11 +210,11 @@ impl Nvme {
         buff: &[u8],
     ) -> Result<()> {
         assert!(
-            buff.len() % ns.lba_size == 0,
+            buff.len().is_multiple_of(ns.lba_size),
             "buffer size must be multiple of lba size"
         );
 
-        let buff = DSlice::from(buff);
+        let buff = DSlice::from(buff, Direction::Bidirectional);
 
         let blk_num = buff.len() / ns.lba_size;
 

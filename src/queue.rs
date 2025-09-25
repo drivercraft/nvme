@@ -275,8 +275,7 @@ pub struct SubmitQueue {
 
 impl SubmitQueue {
     fn new(queue_size: usize, page_size: usize) -> Result<Self> {
-        let queue =
-            DVec::zeros(queue_size, page_size, Direction::ToDevice).ok_or(Error::NoMemory)?;
+        let queue = DVec::zeros(u64::MAX, queue_size, page_size, Direction::ToDevice).unwrap();
         Ok(SubmitQueue { queue, tail: 0 })
     }
 
@@ -308,8 +307,7 @@ pub struct CompleteQueue {
 
 impl CompleteQueue {
     fn new(queue_size: usize, page_size: usize) -> Result<Self> {
-        let queue =
-            DVec::zeros(queue_size, page_size, Direction::FromDevice).ok_or(Error::NoMemory)?;
+        let queue = DVec::zeros(u64::MAX, queue_size, page_size, Direction::FromDevice).unwrap();
         Ok(CompleteQueue {
             queue,
             head: 0,
